@@ -93,11 +93,11 @@ Se quiseres sincronização automática (sem exportar/importar manual), usa o co
    - Abre o ficheiro e, na secção *Backend dedicado gratuito (Supabase)*, preenche: Project URL, anon key, email e password do utilizador Supabase.
    - Clica em **Testar login** para garantir que as credenciais são válidas (se disser "credenciais inválidas", cria/edita o utilizador em *Authentication → Users* ou confirma o email).
    - Marca *Ativar sync automático* e clica em **Guardar configuração**.
-   - Clica em **Pull agora** depois de fazeres login interno (admin/Helder/Goreti) para puxar o snapshot remoto, e o **Push** será feito automaticamente sempre que gravares movimentos/débitos/metas.
+   - Depois de fazeres login interno (admin/Helder/Goreti), é feito **pull automático** de 15 em 15 segundos e sempre que clicares em **Pull agora**. O **Push** é disparado de imediato sempre que gravares movimentos/débitos/metas ou metas/categorias/definições.
 
 5. **Como funciona o sync automático**
-   - A app autentica no Supabase com o email/password indicados, faz **pull** ao iniciar sessão e agenda **push** sempre que guardas dados.
-   - Os dados continuam filtrados pelo login interno; o Supabase apenas armazena o JSON cifrado pelo próprio serviço com RLS por utilizador.
+   - A app autentica no Supabase com o email/password indicados, faz **pull** ao iniciar sessão, repete o pull em segundo plano (15s) enquanto estiveres com sessão interna ativa e agenda **push** imediato sempre que guardas dados.
+   - Os dados continuam filtrados pelo login interno; o Supabase apenas armazena o JSON cifrado pelo próprio serviço com RLS por utilizador. O código grava via update/insert (sem precisar de índice único em `user_id`), pelo que basta garantir a tabela e as políticas ativas.
 
 6. **Preciso sempre de internet?**
    - **Sim, para o Supabase**: pulls/pushes só funcionam com ligação ativa. Se estiveres offline, continuas a trabalhar localmente e o push fica em fila; quando a internet voltar, o conector envia a versão mais recente.

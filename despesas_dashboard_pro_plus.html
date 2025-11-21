@@ -886,6 +886,8 @@
     let supabaseClientUrl = "";
     let supabaseSession = null;
     let supabasePushTimer = null;
+    let supabaseAutoPullTimer = null;
+    const SUPABASE_AUTO_PULL_INTERVAL = 15000;
     function getFullSnapshot() {
       return {
         movimentos: loadMovimentos(),
@@ -938,13 +940,13 @@
       }
       return supabaseClient;
     }
-    async function supabaseLogin() {
+    async function supabaseLogin(silent=false) {
       const cfg = loadSupabaseConfig();
       if (!supabaseConfigEnabled(cfg)) return null;
       const client = ensureSupabaseClient(cfg);
       if (!client) return null;
       if (supabaseSession && supabaseSession.user) return supabaseSession.user;
-      setSupabaseStatus("A iniciar sessão no Supabase...");
+      if (!silent) setSupabaseStatus("A iniciar sessão no Supabase...");
       const { data, error } = await client.auth.signInWithPassword({ email: cfg.email, password: cfg.password });
       if (error) {
         const hint = error.message?.toLowerCase().includes("invalid")
@@ -954,13 +956,13 @@
         return null;
       }
       supabaseSession = data.session;
-      setSupabaseStatus("Autenticado no Supabase.");
+      if (!silent) setSupabaseStatus("Autenticado no Supabase.");
       return data.session?.user || null;
     }
-    async function supabasePullLatest(showEmptyMsg=true) {
-      const user = await supabaseLogin();
+    async function supabasePullLatest(showEmptyMsg=true, silent=false) {
+      const user = await supabaseLogin(silent);
       if (!user) return;
-      setSupabaseStatus("A obter dados do Supabase...");
+      if (!silent) setSupabaseStatus("A obter dados do Supabase...");
       const { data, error } = await supabaseClient
         .from('despesas_sync')
         .select('payload, updated_at')
@@ -976,8 +978,8 @@
         if (currentSessionName) localStorage.setItem(STORAGE_SESSION, currentSessionName);
         renderTudo();
         const stamp = data.updated_at ? data.updated_at.replace('T',' ').slice(0,19) : new Date().toLocaleString();
-        setSupabaseStatus("Dados importados do Supabase em " + stamp + ".");
-      } else if (showEmptyMsg) {
+        setSupabaseStatus((silent ? "Sync automático concluído às " : "Dados importados do Supabase em ") + stamp + ".");
+      } else if (showEmptyMsg && !silent) {
         setSupabaseStatus("Ainda não há snapshot remoto. Faz um push para criar.");
       }
     }
@@ -986,9 +988,19 @@
       if (!user) return;
       setSupabaseStatus("A gravar snapshot no Supabase...");
       const payload = getFullSnapshot();
-      const { error } = await supabaseClient
+      const { data: existing, error: fetchErr } = await supabaseClient
         .from('despesas_sync')
-        .upsert({ user_id: user.id, payload, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (fetchErr) {
+        setSupabaseStatus("Erro ao verificar snapshot remoto: " + fetchErr.message, true);
+        return;
+      }
+      const upsertPayload = { user_id: user.id, payload, updated_at: new Date().toISOString() };
+      const { error } = existing?.id
+        ? await supabaseClient.from('despesas_sync').update(upsertPayload).eq('id', existing.id)
+        : await supabaseClient.from('despesas_sync').insert(upsertPayload);
       if (error) {
         setSupabaseStatus("Erro ao gravar no Supabase: " + error.message, true);
         return;
@@ -1006,12 +1018,28 @@
     async function supabaseLogout() {
       if (supabaseClient) await supabaseClient.auth.signOut();
       supabaseSession = null;
+      stopSupabaseAutoPull();
       setSupabaseStatus("Sessão Supabase terminada.");
     }
     async function supabaseAutoPullAfterLogin() {
       const cfg = loadSupabaseConfig();
       if (!supabaseConfigEnabled(cfg)) return;
       await supabasePullLatest(false);
+      startSupabaseAutoPull();
+    }
+    function startSupabaseAutoPull() {
+      stopSupabaseAutoPull();
+      const cfg = loadSupabaseConfig();
+      if (!supabaseConfigEnabled(cfg)) return;
+      supabaseAutoPullTimer = setInterval(() => {
+        const sessionName = localStorage.getItem(STORAGE_SESSION);
+        if (!sessionName) return;
+        supabasePullLatest(false, true).catch(err => setSupabaseStatus("Erro de sync: " + (err?.message || err), true));
+      }, SUPABASE_AUTO_PULL_INTERVAL);
+    }
+    function stopSupabaseAutoPull() {
+      if (supabaseAutoPullTimer) clearInterval(supabaseAutoPullTimer);
+      supabaseAutoPullTimer = null;
     }
     function updateSyncStatus(msg) {
       const el = document.getElementById("syncStatus");
@@ -1678,7 +1706,8 @@
       if (supPassInput) supPassInput.value = supCfg.password || "";
       if (supEnable) supEnable.checked = !!supCfg.enabled;
       if (supabaseConfigEnabled(supCfg)) {
-        setSupabaseStatus("Configuração Supabase carregada. Faz login interno e carrega Pull para trazer os dados.");
+        setSupabaseStatus("Configuração Supabase carregada. Pull automático a cada 15s depois de fazer login interno.");
+        startSupabaseAutoPull();
       }
 
       if (saveSupBtn) {
@@ -1692,8 +1721,13 @@
           };
           saveSupabaseConfig(cfg);
           supabaseSession = null;
+          if (cfg.enabled) {
+            startSupabaseAutoPull();
+          } else {
+            stopSupabaseAutoPull();
+          }
           setSupabaseStatus(cfg.enabled
-            ? "Configuração guardada. Usa Pull para carregar do Supabase e Push ao gravar."
+            ? "Configuração guardada. Pull automático após login e push imediato sempre que gravares."
             : "Supabase desativado. Guarda novamente para voltar a ativar.");
         });
       }
