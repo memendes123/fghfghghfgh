@@ -6,6 +6,10 @@
     <title>Despesas Dashboard PRO+</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      // Garante que qualquer sessão anterior é anulada antes de renderizar o HTML
+      try { localStorage.setItem("sessionPRO_v1", ""); } catch {}
+    </script>
   <style>
     :root {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -1201,6 +1205,16 @@
 
       const appContent = document.getElementById("appContent");
       if (appContent) appContent.style.display = user ? "block" : "none";
+
+      if (!user) {
+        // Proteção extra: limpa tabelas para evitar restos visuais de sessões anteriores
+        ["tabelaBody","tabelaDebitos","resumoMensalBody","tabelaCategoriasBody","tabelaPessoasBody"]
+          .forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ""; });
+        ["metaHelderLabel","realHelderLabel","metaNamoradaLabel","realNamoradaLabel","metaConjuntoLabel","realConjuntoLabel","metaPoupancaLabel","realPoupancaLabel"]
+          .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = ""; });
+        ["metaHelderBar","metaNamoradaBar","metaConjuntoBar","metaPoupancaBar"]
+          .forEach(id => { const el = document.getElementById(id); if (el) el.style.width = "0%"; });
+      }
 
       document.querySelectorAll('[data-admin-only="true"]').forEach(sec => {
         sec.style.display = (user && user.role === "admin") ? "block" : "none";

@@ -2,7 +2,7 @@
 
 ## Como começar
 1. Abre o ficheiro `despesas_dashboard_pro_plus.html` diretamente no browser (Chrome, Edge ou Safari). Podes guardá-lo no iCloud Drive/Google Drive e abri-lo localmente.
-2. Sempre que abres o ficheiro, a sessão é automaticamente encerrada para impedir que dados fiquem visíveis. O primeiro ecrã é sempre o **Login**.
+2. Sempre que abres o ficheiro, a sessão é automaticamente encerrada (o painel fica escondido e as tabelas são limpas) para impedir que dados fiquem visíveis. O primeiro ecrã é sempre o **Login**.
 3. Introduz `admin` / `admin` para entrares como administrador e muda de imediato essa password.
 4. Depois de entrares, todo o painel fica visível. Sem sessão iniciada não é possível ver tabelas ou exportar dados.
 
