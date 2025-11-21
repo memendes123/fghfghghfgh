@@ -4,7 +4,7 @@
 1. Abre o ficheiro `despesas_dashboard_pro_plus.html` diretamente no browser (Chrome, Edge ou Safari). Podes guardá-lo no iCloud Drive/Google Drive e abri-lo localmente.
 2. Sempre que abres o ficheiro, a sessão é automaticamente encerrada para impedir que dados fiquem visíveis. O primeiro ecrã é sempre o **Login**.
 3. Introduz `admin` / `admin` para entrares como administrador e muda de imediato essa password.
-4. Depois de entrares, todo o painel fica visível. Sem sessão iniciada não é possível ver tabelas, gráficos ou exportar dados.
+4. Depois de entrares, todo o painel fica visível. Sem sessão iniciada não é possível ver tabelas ou exportar dados.
 
 ## Utilizadores e acessos
 - O admin pode criar/remover utilizadores e definir o seu perfil (Admin, Helder, Goreti ou Conjunto).
@@ -17,7 +17,7 @@
 3. Para débitos diretos, indica o dia, descrição, valor e pessoa e grava.
 
 ## Metas, dashboard e filtros
-- O dashboard mostra totais e gráficos apenas para o utilizador autenticado.
+- O dashboard mostra totais em tabela apenas para o utilizador autenticado.
 - Define metas mensais nas caixas próprias e grava com **Guardar metas**.
 - Usa o filtro de mês para navegar entre períodos.
 
