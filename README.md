@@ -37,6 +37,12 @@
 - **Android:** abre no Chrome → menu ⋮ → *Adicionar à tela inicial*.
 - Cada telemóvel guarda os dados localmente; usa o backup `.json` para manter dois dispositivos alinhados.
 
+### Se no telemóvel só vês o código em vez da app
+- Isso acontece porque o Google Drive/iCloud mostra uma pré-visualização de texto. Não precisas de o guardar no ambiente de trabalho: basta abrir diretamente no navegador.
+- **iPhone (Drive/iCloud):** toca nos três pontos → *Abrir em* → *Safari* (ou *Chrome*). Se o ficheiro for para o *Ficheiros*, toca no HTML → botão Partilhar → *Abrir no Safari*. Depois, usa *Adicionar ao ecrã principal*.
+- **Android (Drive):** toca nos três pontos do ficheiro → *Abrir com* → *Chrome* (ou *Download* e abre a partir da pasta *Downloads*). Em seguida usa ⋮ → *Adicionar à tela inicial*.
+- Se preferires um link direto sem downloads, hospeda o HTML em GitHub Pages/Netlify/Cloudflare Pages/Vercel (todos gratuitos para ficheiros estáticos) e abre esse URL no telemóvel.
+
 ## Usar em dois telemóveis com os mesmos dados
 1. Num telemóvel, depois de atualizares dados, exporta o backup `.json`.
 2. Guarda esse `.json` no Google Drive/iCloud.
