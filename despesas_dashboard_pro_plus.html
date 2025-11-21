@@ -784,6 +784,9 @@
     const STORAGE_SESSION = "sessionPRO_v1";
     const SYNC_CHANNEL_NAME = "despesasPRO_sync";
     const STORAGE_SUPABASE = "supabaseCfg_v1";
+    // Opcional: codifica aqui uma configuração Supabase para ficar embutida no próprio HTML (base64 de um JSON
+    // {"url":"https://xxx.supabase.co","anon":"...","email":"...","password":"...","enabled":true}).
+    const BUILTIN_SUPABASE_B64 = "";
 
     // Utils
     function formatCurrency(value) {
@@ -913,12 +916,47 @@
     }
 
     // Supabase helpers
+    function decodeSupabaseBase64(str) {
+      if (!str) return "";
+      try { return atob(str); } catch { return str; }
+    }
+    function normalizeSupabaseConfig(raw) {
+      if (!raw) return {};
+      const cfg = { ...raw };
+      if (!cfg.anon && cfg.anonEncoded) cfg.anon = decodeSupabaseBase64(cfg.anonEncoded);
+      if (!cfg.password && cfg.passEncoded) cfg.password = decodeSupabaseBase64(cfg.passEncoded);
+      if (typeof cfg.enabled === "undefined" && cfg.url && cfg.anon && cfg.email && cfg.password) {
+        cfg.enabled = true;
+      }
+      return cfg;
+    }
+    function loadEmbeddedSupabaseConfig() {
+      if (!BUILTIN_SUPABASE_B64) return {};
+      try {
+        const decoded = JSON.parse(decodeSupabaseBase64(BUILTIN_SUPABASE_B64));
+        return normalizeSupabaseConfig(decoded);
+      } catch {
+        return {};
+      }
+    }
     function loadSupabaseConfig() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_SUPABASE) || "{}"); }
-      catch { return {}; }
+      const base = loadEmbeddedSupabaseConfig();
+      try {
+        const fromStorage = JSON.parse(localStorage.getItem(STORAGE_SUPABASE) || "{}");
+        return normalizeSupabaseConfig({ ...base, ...fromStorage });
+      } catch {
+        return normalizeSupabaseConfig(base);
+      }
     }
     function saveSupabaseConfig(cfg) {
-      localStorage.setItem(STORAGE_SUPABASE, JSON.stringify(cfg || {}));
+      const payload = {
+        url: cfg?.url || "",
+        anonEncoded: cfg?.anon ? btoa(cfg.anon) : "",
+        email: cfg?.email || "",
+        passEncoded: cfg?.password ? btoa(cfg.password) : "",
+        enabled: !!cfg?.enabled
+      };
+      localStorage.setItem(STORAGE_SUPABASE, JSON.stringify(payload));
     }
     function supabaseConfigEnabled(cfg) {
       return !!(cfg && cfg.enabled && cfg.url && cfg.anon && cfg.email && cfg.password);
@@ -1699,6 +1737,8 @@
       const pullSupBtn = document.getElementById("pullSupabase");
       const pushSupBtn = document.getElementById("pushSupabase");
       const logoutSupBtn = document.getElementById("logoutSupabase");
+      const embeddedSupCfg = loadEmbeddedSupabaseConfig();
+      const hasEmbeddedSupCfg = supabaseConfigEnabled(embeddedSupCfg);
 
       if (supUrlInput) supUrlInput.value = supCfg.url || "";
       if (supAnonInput) supAnonInput.value = supCfg.anon || "";
@@ -1708,6 +1748,8 @@
       if (supabaseConfigEnabled(supCfg)) {
         setSupabaseStatus("Configuração Supabase carregada. Pull automático a cada 15s depois de fazer login interno.");
         startSupabaseAutoPull();
+      } else if (hasEmbeddedSupCfg) {
+        setSupabaseStatus("Configuração Supabase embutida pronta a usar: abre o HTML noutro dispositivo e faz login interno para sincronizar automaticamente.");
       }
 
       if (saveSupBtn) {
