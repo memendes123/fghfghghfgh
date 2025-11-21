@@ -901,9 +901,16 @@
 
     // Débitos diretos UI
     function renderDebitosUI() {
-      const debitos = filterDataForUser(loadDebitos());
+      const sessionUser = getSessionUser();
       const tbody = document.getElementById("tabelaDebitos");
       if (!tbody) return;
+
+      if (!sessionUser) {
+        tbody.innerHTML = "";
+        return;
+      }
+
+      const debitos = filterDataForUser(loadDebitos());
       tbody.innerHTML = "";
       debitos
         .slice()
@@ -1066,11 +1073,18 @@
 
     // Tabela de movimentos
     function renderTabelaMovimentos() {
+      const tbody = document.getElementById("tabelaBody");
+      const sessionUser = getSessionUser();
+      if (!tbody) return;
+
+      if (!sessionUser) {
+        tbody.innerHTML = "";
+        return;
+      }
+
       const all = loadMovimentos();
       const month = getCurrentMonth();
       const monthData = filterDataForUser(filterByMonth(all, month));
-      const tbody = document.getElementById("tabelaBody");
-      if (!tbody) return;
       tbody.innerHTML = "";
 
       monthData
@@ -1140,6 +1154,7 @@
     let chart1, chart2, chart3;
 
     function renderDashboardEGraficos() {
+      const user = getSessionUser();
       const all = loadMovimentos();
       const month = getCurrentMonth();
       const monthData = filterDataForUser(filterByMonth(all, month));
@@ -1148,6 +1163,17 @@
 
       let totalDesp = 0;
       let totalRec = 0;
+
+      if (!user) {
+        ["totalReceitas","totalDespesas","saldoFinal","metaHelderLabel","metaNamoradaLabel","metaConjuntoLabel","metaPoupancaLabel"].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = "—";
+        });
+
+        [chart1, chart2, chart3].forEach(ch => { if (ch) ch.destroy(); });
+        chart1 = chart2 = chart3 = null;
+        return;
+      }
 
       // Totais por pessoa (só despesas)
       const porPessoa = { Helder:0, Goreti:0, Conjunto:0 };
@@ -1312,6 +1338,7 @@
           if (typeof data.saldoInicial !== "undefined") saveSaldoInicial(data.saldoInicial);
           if (data.users) saveUsers(data.users);
           if (data.settings) saveSettings(data.settings);
+          logoutUser();
           alert("Backup importado com sucesso!");
           renderTudo();
         } catch (e) {
@@ -1433,6 +1460,9 @@
     document.addEventListener("DOMContentLoaded", () => {
       ensureDefaultUsers();
       setupSyncChannel();
+
+      // Obriga um novo login a cada abertura para não herdar sessões antigas
+      logoutUser();
 
       // saldo inicial
       const saldoInicialInput = document.getElementById("saldoInicial");

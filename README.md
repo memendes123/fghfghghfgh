@@ -2,8 +2,9 @@
 
 ## Como começar
 1. Abre o ficheiro `despesas_dashboard_pro_plus.html` diretamente no browser (Chrome, Edge ou Safari). Podes guardá-lo no iCloud Drive/Google Drive e abri-lo localmente.
-2. A primeira coisa que vês é o ecrã de **Login**. Introduz `admin` / `admin` para entrares como administrador e muda de imediato essa password.
-3. Depois de entrares, todo o painel fica visível. Sem sessão iniciada não é possível ver tabelas, gráficos ou exportar dados.
+2. Sempre que abres o ficheiro, a sessão é automaticamente encerrada para impedir que dados fiquem visíveis. O primeiro ecrã é sempre o **Login**.
+3. Introduz `admin` / `admin` para entrares como administrador e muda de imediato essa password.
+4. Depois de entrares, todo o painel fica visível. Sem sessão iniciada não é possível ver tabelas, gráficos ou exportar dados.
 
 ## Utilizadores e acessos
 - O admin pode criar/remover utilizadores e definir o seu perfil (Admin, Helder, Goreti ou Conjunto).
@@ -26,7 +27,18 @@
 - Usa **Exportar Excel/CSV** ou **Copiar para Google Sheets** para partilhar dados sem expor acesso total.
 - O botão **Forçar sincronização** só sincroniza separadores/PCs a correr o mesmo ficheiro em simultâneo.
 
+## Guardar no Google Drive ou iCloud
+- Carrega o ficheiro HTML para a tua Drive (Google Drive) ou iCloud Drive. 
+- No telemóvel, abre o ficheiro a partir da app Drive/iCloud e escolhe abrir no navegador (Safari/Chrome). O login continua a ser obrigatório sempre que abrires.
+- Mantém uma cópia de segurança do `.json` no mesmo serviço para poderes restaurar rapidamente se mudares de dispositivo.
+
 ## Usar no telemóvel
 - **iPhone:** abre o HTML no Safari → Partilhar → *Adicionar ao ecrã principal* para criar um atalho em ecrã inteiro.
 - **Android:** abre no Chrome → menu ⋮ → *Adicionar à tela inicial*.
 - Cada telemóvel guarda os dados localmente; usa o backup `.json` para manter dois dispositivos alinhados.
+
+## Usar em dois telemóveis com os mesmos dados
+1. Num telemóvel, depois de atualizares dados, exporta o backup `.json`.
+2. Guarda esse `.json` no Google Drive/iCloud.
+3. No segundo telemóvel, descarrega o `.json` e faz **Importar backup**. O login é sempre requerido após a importação.
+4. Sempre que fizeres alterações em qualquer telemóvel, volta a exportar o backup e repete o passo 3 no outro para manter a informação sincronizada.
