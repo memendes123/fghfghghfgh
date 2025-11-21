@@ -42,3 +42,18 @@
 2. Guarda esse `.json` no Google Drive/iCloud.
 3. No segundo telemóvel, descarrega o `.json` e faz **Importar backup**. O login é sempre requerido após a importação.
 4. Sempre que fizeres alterações em qualquer telemóvel, volta a exportar o backup e repete o passo 3 no outro para manter a informação sincronizada.
+
+## Posso sincronizar sem exportar/importar sempre?
+- Não existe sincronização automática em tempo real porque a app não tem servidor próprio nem base de dados online. Tudo fica guardado localmente no navegador de cada dispositivo para manter a privacidade.
+- Para minimizar os passos manuais, usa uma **pasta partilhada** no Google Drive/Dropbox/iCloud:
+  - Guarda o backup `.json` nessa pasta; ele fica disponível para todos os dispositivos com acesso à pasta.
+  - Depois de atualizares os dados, substitui o ficheiro existente na pasta partilhada (exporta com o mesmo nome e sobrescreve).
+  - Nos outros telemóveis, basta abrir a pasta e descarregar esse `.json` atualizado antes de clicar em **Importar backup**.
+- Evita partilhar o ficheiro por links públicos; mantém a pasta privada e só partilhada com as contas de quem pode ver os dados.
+
+## Onde posso hospedar o HTML de forma gratuita e segura?
+- Qualquer serviço de alojamento de ficheiros (Google Drive/iCloud/Dropbox) funciona, abrindo o HTML no navegador diretamente a partir da app do serviço.
+- Se preferires um link estático fácil de abrir:
+  - **GitHub Pages** (gratuito): cria um repositório privado ou público, faz upload do `despesas_dashboard_pro_plus.html` e ativa o Pages. O ficheiro fica disponível num URL HTTPS.
+  - **Netlify/Cloudflare Pages/Vercel** (gratuitos para uso pessoal): criam um site estático a partir de um upload ou de um repositório Git. Sobe apenas o HTML para evitar expor backups.
+- Em qualquer opção, o login continua obrigatório ao abrir o ficheiro e os dados só ficam no dispositivo até exportares um backup para a tua pasta segura.
