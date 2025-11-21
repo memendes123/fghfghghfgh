@@ -972,8 +972,8 @@
       };
       localStorage.setItem(STORAGE_SUPABASE, JSON.stringify(payload));
     }
-    function supabaseConfigEnabled(cfg) {
-      return !!(cfg && cfg.enabled && cfg.url && cfg.anon && cfg.email && cfg.password);
+    function supabaseConfigEnabled(cfg, ignoreToggle=false) {
+      return !!(cfg && (ignoreToggle || cfg.enabled) && cfg.url && cfg.anon && cfg.email && cfg.password);
     }
     function setSupabaseStatus(msg, isError=false) {
       const el = document.getElementById("supabaseStatus");
@@ -992,9 +992,9 @@
       }
       return supabaseClient;
     }
-    async function supabaseLogin(silent=false) {
+    async function supabaseLogin(silent=false, allowDisabled=false) {
       const cfg = loadSupabaseConfig();
-      if (!supabaseConfigEnabled(cfg)) return null;
+      if (!supabaseConfigEnabled(cfg, allowDisabled)) return null;
       const client = ensureSupabaseClient(cfg);
       if (!client) return null;
       if (supabaseSession && supabaseSession.user) return supabaseSession.user;
@@ -1011,8 +1011,8 @@
       if (!silent) setSupabaseStatus("Autenticado no Supabase.");
       return data.session?.user || null;
     }
-    async function supabasePullLatest(showEmptyMsg=true, silent=false) {
-      const user = await supabaseLogin(silent);
+    async function supabasePullLatest(showEmptyMsg=true, silent=false, allowDisabled=false) {
+      const user = await supabaseLogin(silent, allowDisabled);
       if (!user) return;
       if (!silent) setSupabaseStatus("A obter dados do Supabase...");
       const { data, error } = await supabaseClient
@@ -1035,8 +1035,8 @@
         setSupabaseStatus("Ainda não há snapshot remoto. Faz um push para criar.");
       }
     }
-    async function supabasePushLatest() {
-      const user = await supabaseLogin();
+    async function supabasePushLatest(allowDisabled=false) {
+      const user = await supabaseLogin(false, allowDisabled);
       if (!user) return;
       setSupabaseStatus("A gravar snapshot no Supabase...");
       const payload = getFullSnapshot();
@@ -1753,6 +1753,7 @@
       const logoutSupBtn = document.getElementById("logoutSupabase");
       const embeddedSupCfg = loadEmbeddedSupabaseConfig();
       const hasEmbeddedSupCfg = supabaseConfigEnabled(embeddedSupCfg);
+      const supCfgComplete = supabaseConfigEnabled(supCfg, true);
 
       if (supUrlInput) supUrlInput.value = supCfg.url || "";
       if (supAnonInput) supAnonInput.value = supCfg.anon || "";
@@ -1762,6 +1763,8 @@
       if (supabaseConfigEnabled(supCfg)) {
         setSupabaseStatus("Configuração Supabase carregada. Pull automático a cada 15s depois de fazer login interno.");
         startSupabaseAutoPull();
+      } else if (supCfgComplete) {
+        setSupabaseStatus("Dados do Supabase guardados mas sync automático está desligado. Usa os botões manuais ou ativa a caixa de seleção para ligar o push/pull automático.");
       } else if (hasEmbeddedSupCfg) {
         setSupabaseStatus("Configuração Supabase embutida pronta a usar: abre o HTML noutro dispositivo e faz login interno para sincronizar automaticamente.");
       }
@@ -1789,12 +1792,12 @@
       }
       if (testSupBtn) {
         testSupBtn.addEventListener("click", async () => {
-          const user = await supabaseLogin();
+          const user = await supabaseLogin(false, true);
           if (user) setSupabaseStatus("Login Supabase válido para " + (user.email || "utilizador"));
         });
       }
-      if (pullSupBtn) pullSupBtn.addEventListener("click", () => supabasePullLatest());
-      if (pushSupBtn) pushSupBtn.addEventListener("click", () => supabasePushLatest());
+      if (pullSupBtn) pullSupBtn.addEventListener("click", () => supabasePullLatest(true, false, true));
+      if (pushSupBtn) pushSupBtn.addEventListener("click", () => supabasePushLatest(true));
       if (logoutSupBtn) logoutSupBtn.addEventListener("click", () => { supabaseLogout(); });
 
       // saldo inicial
