@@ -4,7 +4,7 @@
 1. Abre o ficheiro `despesas_dashboard_pro_plus.html` diretamente no browser (Chrome, Edge ou Safari). Podes guardá-lo no iCloud Drive/Google Drive e abri-lo localmente.
 2. Sempre que abres o ficheiro, a sessão é automaticamente encerrada para impedir que dados fiquem visíveis. O primeiro ecrã é sempre o **Login**.
 3. Introduz `admin` / `admin` para entrares como administrador e muda de imediato essa password.
-4. Depois de entrares, todo o painel fica visível. Sem sessão iniciada não é possível ver tabelas, gráficos ou exportar dados.
+4. Depois de entrares, todo o painel fica visível. Sem sessão iniciada não é possível ver tabelas ou exportar dados.
 
 ## Utilizadores e acessos
 - O admin pode criar/remover utilizadores e definir o seu perfil (Admin, Helder, Goreti ou Conjunto).
@@ -17,7 +17,7 @@
 3. Para débitos diretos, indica o dia, descrição, valor e pessoa e grava.
 
 ## Metas, dashboard e filtros
-- O dashboard mostra totais e gráficos apenas para o utilizador autenticado.
+- O dashboard mostra totais em tabela apenas para o utilizador autenticado.
 - Define metas mensais nas caixas próprias e grava com **Guardar metas**.
 - Usa o filtro de mês para navegar entre períodos.
 
@@ -59,3 +59,70 @@
   - **GitHub Pages** (gratuito): cria um repositório privado ou público, faz upload do `despesas_dashboard_pro_plus.html` e ativa o Pages. O ficheiro fica disponível num URL HTTPS.
   - **Netlify/Cloudflare Pages/Vercel** (gratuitos para uso pessoal): criam um site estático a partir de um upload ou de um repositório Git. Sobe apenas o HTML para evitar expor backups.
 - Em qualquer opção, o login continua obrigatório ao abrir o ficheiro e os dados só ficam no dispositivo até exportares um backup para a tua pasta segura.
+
+## Como criar um backend dedicado gratuito (Supabase)
+Se quiseres sincronização automática (sem exportar/importar manual), precisas de um backend. O plano gratuito do Supabase permite fazê-lo com autenticação e base de dados Postgres.
+
+1. **Criar conta e projeto**
+   - Abre <https://supabase.com>, cria uma conta (plano Free) e cria um projeto numa região próxima.
+   - Vai a *Authentication → Providers* e garante que o *Email/Password* está ativo.
+
+2. **Criar tabela para guardar o snapshot**
+   - Abre *SQL* e corre este script para uma tabela simples com `jsonb`:
+   ```sql
+   create table if not exists public.despesas_sync (
+     id uuid primary key default gen_random_uuid(),
+     user_id uuid not null references auth.users(id),
+     payload jsonb not null,
+     updated_at timestamptz default now()
+   );
+   alter table public.despesas_sync enable row level security;
+   create policy "owner can select" on public.despesas_sync
+     for select using (auth.uid() = user_id);
+   create policy "owner can upsert" on public.despesas_sync
+     for insert with check (auth.uid() = user_id);
+   create policy "owner can update" on public.despesas_sync
+     for update using (auth.uid() = user_id);
+   ```
+
+3. **Gerar chaves e configurar variáveis**
+   - Em *Project Settings → API* copia o **Project URL** e a **anon public key**.
+   - No HTML, adiciona antes do `<script>` principal:
+   ```html
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+   <script>
+     const SUPABASE_URL = "https://<o_teu_projeto>.supabase.co";
+     const SUPABASE_ANON = "<chave_anon>";
+     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+   </script>
+   ```
+
+4. **Exemplo de sincronização automática**
+   - Depois de o utilizador iniciar sessão na app (user/role atuais), podes enviar e ler o snapshot completo:
+   ```js
+   async function pushSnapshot(userId, snapshot) {
+     const { error } = await supabase
+       .from('despesas_sync')
+       .upsert({ user_id: userId, payload: snapshot, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+     if (error) console.error('Erro ao gravar no Supabase', error);
+   }
+
+   async function pullSnapshot(userId) {
+     const { data, error } = await supabase
+       .from('despesas_sync')
+       .select('payload, updated_at')
+       .eq('user_id', userId)
+       .maybeSingle();
+     if (error) { console.error('Erro ao ler do Supabase', error); return null; }
+     return data?.payload || null;
+   }
+   ```
+   - Para obter o `userId`, autentica-te com `supabase.auth.signInWithPassword({ email, password })` e usa `session.user.id`.
+   - Chama `pushSnapshot` sempre que gravares (movimentos, débitos, metas) e `pullSnapshot` no login/refresh para sincronizar os dados entre telemóveis.
+
+5. **Boas práticas de segurança**
+   - Usa sempre o domínio HTTPS gerado pelo Supabase ou um domínio teu com HTTPS.
+   - Não publiques a **service key** no HTML; usa apenas a *anon public key* com RLS ativo.
+   - Mantém o ficheiro HTML privado ou protegido por autenticação se o alojares em GitHub Pages/Netlify.
+
+Com isto consegues ter sincronização automática gratuita. A app continua a exigir login interno, mas passa a guardar/lêr o JSON partilhado do Supabase em todos os dispositivos autenticados.

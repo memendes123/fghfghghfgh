@@ -1,12 +1,10 @@
 
 <!DOCTYPE html>
 <html lang="pt">
-<head>
-  <meta charset="UTF-8" />
-  <title>Despesas Dashboard PRO+</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Chart.js para gráficos -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Despesas Dashboard PRO+</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -193,17 +191,33 @@
       font-size: 0.83rem;
     }
 
-    .chart-canvas {
-      width: 100%;
-      height: 240px;
-      max-height: 260px;
-    }
-    th, td {
-      padding: 0.45rem 0.4rem;
-      border-bottom: 1px solid #1f2933;
-      text-align: left;
-      white-space: nowrap;
-    }
+      th, td {
+        padding: 0.45rem 0.4rem;
+        border-bottom: 1px solid #1f2933;
+        text-align: left;
+        white-space: nowrap;
+      }
+      .table-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 0.75rem;
+        margin-top: 1rem;
+      }
+      .dashboard-table {
+        border: 1px solid rgba(148,163,184,0.3);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .dashboard-table caption {
+        text-align: left;
+        font-weight: 700;
+        font-size: 0.9rem;
+        padding: 0.6rem 0.75rem 0.1rem 0.75rem;
+        color: #e5e7eb;
+      }
+      .dashboard-table tbody tr:hover {
+        background: rgba(52,211,153,0.08);
+      }
     th {
       background: rgba(15,23,42,0.9);
       font-weight: 600;
@@ -436,12 +450,41 @@
         </div>
       </div>
 
-      <div style="margin-top:1.1rem; display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:0.75rem;">
-        <canvas id="chartDespesas" class="chart-canvas"></canvas>
-        <canvas id="chartCategorias" class="chart-canvas"></canvas>
-        <canvas id="chartPorPessoa" class="chart-canvas"></canvas>
-      </div>
-    </section>
+        <div class="table-grid">
+          <table class="dashboard-table">
+            <caption>Resumo do mês</caption>
+            <thead>
+              <tr><th>Indicador</th><th>Valor</th></tr>
+            </thead>
+            <tbody id="resumoMensalBody">
+              <tr><td>Despesas</td><td>—</td></tr>
+              <tr><td>Receitas</td><td>—</td></tr>
+              <tr><td>Poupança</td><td>—</td></tr>
+              <tr><td>Saldo (com saldo inicial)</td><td>—</td></tr>
+            </tbody>
+          </table>
+
+          <table class="dashboard-table">
+            <caption>Despesas por categoria</caption>
+            <thead>
+              <tr><th>Categoria</th><th>Total</th></tr>
+            </thead>
+            <tbody id="tabelaCategoriasBody">
+              <tr><td colspan="2">Sem dados</td></tr>
+            </tbody>
+          </table>
+
+          <table class="dashboard-table">
+            <caption>Despesas por pessoa</caption>
+            <thead>
+              <tr><th>Pessoa</th><th>Total</th></tr>
+            </thead>
+            <tbody id="tabelaPessoasBody">
+              <tr><td colspan="2">Sem dados</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
     <!-- NOVO MOVIMENTO -->
     <section class="card">
@@ -650,6 +693,21 @@
         <button class="btn-primary btn-small" id="forceSyncBtn">Forçar sincronização agora</button>
         <div id="syncStatus" style="font-size:0.86rem; color:#9ca3af;"></div>
       </div>
+    </section>
+
+    <!-- BACKEND DEDICADO (OPCIONAL) -->
+    <section class="card">
+      <div class="flex-between">
+        <h2>Backend dedicado gratuito (Supabase)</h2>
+        <small style="color:#9ca3af;">Para sincronização automática entre telemóveis/PCs</small>
+      </div>
+      <ul style="margin:0; padding-left:1.1rem; color:#9ca3af; font-size:0.9rem; line-height:1.45;">
+        <li>Cria conta em <strong>Supabase (plano Free)</strong> e ativa <em>Email/Password</em> em Authentication.</li>
+        <li>Em <em>SQL</em>, cria a tabela <code>despesas_sync</code> com colunas <code>user_id uuid</code> e <code>payload jsonb</code>, com políticas RLS a permitir apenas o dono (ver README para o script completo).</li>
+        <li>Em <em>Project Settings → API</em> copia o <em>Project URL</em> e a <em>anon key</em>. No HTML adiciona a biblioteca <code>@supabase/supabase-js</code> e usa-a para <code>upsert</code>/<code>select</code> o snapshot.</li>
+        <li>Padrão: faz <code>pull</code> no login e <code>push</code> sempre que gravares movimentos/débitos/metas para manter os dispositivos alinhados.</li>
+        <li>Segue o passo-a-passo detalhado no README para não expor chaves e manter o backend seguro.</li>
+      </ul>
     </section>
 
     <!-- LISTA DE MOVIMENTOS -->
@@ -1156,178 +1214,128 @@
         });
     }
 
-    // Dashboard + gráficos
-    let chart1, chart2, chart3;
+      // Dashboard + tabelas
+      function renderDashboardEGraficos() {
+        const user = getSessionUser();
+        const all = loadMovimentos();
+        const month = getCurrentMonth();
+        const monthData = filterDataForUser(filterByMonth(all, month));
+        const saldoInicialInput = document.getElementById("saldoInicial");
+        const saldoInicial = saldoInicialInput ? (Number(saldoInicialInput.value.replace(",", ".")) || 0) : 0;
 
-    function renderDashboardEGraficos() {
-      const user = getSessionUser();
-      const all = loadMovimentos();
-      const month = getCurrentMonth();
-      const monthData = filterDataForUser(filterByMonth(all, month));
-      const saldoInicialInput = document.getElementById("saldoInicial");
-      const saldoInicial = saldoInicialInput ? (Number(saldoInicialInput.value.replace(",", ".")) || 0) : 0;
+        let totalDesp = 0;
+        let totalRec = 0;
 
-      let totalDesp = 0;
-      let totalRec = 0;
+        const resumoBody = document.getElementById("resumoMensalBody");
+        const catBody = document.getElementById("tabelaCategoriasBody");
+        const pessoasBody = document.getElementById("tabelaPessoasBody");
 
-      if (!user) {
-        ["totalReceitas","totalDespesas","saldoFinal","metaHelderLabel","metaNamoradaLabel","metaConjuntoLabel","metaPoupancaLabel"].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.textContent = "—";
+        const setEmptyTables = (msg = "Sem dados") => {
+          if (resumoBody) {
+            resumoBody.innerHTML = `
+              <tr><td>Despesas</td><td>—</td></tr>
+              <tr><td>Receitas</td><td>—</td></tr>
+              <tr><td>Poupança</td><td>—</td></tr>
+              <tr><td>Saldo (com saldo inicial)</td><td>—</td></tr>
+            `;
+          }
+          if (catBody) catBody.innerHTML = `<tr><td colspan="2">${msg}</td></tr>`;
+          if (pessoasBody) pessoasBody.innerHTML = `<tr><td colspan="2">${msg}</td></tr>`;
+        };
+
+        if (!user) {
+          ["totalReceitas","totalDespesas","saldoFinal","metaHelderLabel","metaNamoradaLabel","metaConjuntoLabel","metaPoupancaLabel"].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = "—";
+          });
+
+          setEmptyTables("Faça login para ver os dados");
+          return;
+        }
+
+        // Totais por pessoa (só despesas)
+        const porPessoa = { Helder:0, Goreti:0, Conjunto:0 };
+
+        // Despesas por categoria
+        const porCategoria = {};
+
+        monthData.forEach(item => {
+          const v = Number(item.valor) || 0;
+          if (item.tipo === "despesa") {
+            totalDesp += v;
+            porPessoa[item.pessoa] = (porPessoa[item.pessoa] || 0) + v;
+            porCategoria[item.categoria] = (porCategoria[item.categoria] || 0) + v;
+          } else if (item.tipo === "receita") {
+            totalRec += v;
+          }
         });
 
-        [chart1, chart2, chart3].forEach(ch => { if (ch) ch.destroy(); });
-        chart1 = chart2 = chart3 = null;
-        return;
+        const poupanca = totalRec - totalDesp;
+        const saldo = saldoInicial + poupanca;
+
+        document.getElementById("totalDespesas").textContent = "-" + formatCurrency(totalDesp);
+        document.getElementById("totalReceitas").textContent = formatCurrency(totalRec);
+        document.getElementById("poupancaMes").textContent = formatCurrency(poupanca);
+        document.getElementById("saldoMes").textContent = formatCurrency(saldo);
+
+        if (resumoBody) {
+          resumoBody.innerHTML = `
+            <tr><td>Despesas</td><td>- ${formatCurrency(totalDesp)}</td></tr>
+            <tr><td>Receitas</td><td>${formatCurrency(totalRec)}</td></tr>
+            <tr><td>Poupança</td><td>${formatCurrency(poupanca)}</td></tr>
+            <tr><td>Saldo (com saldo inicial)</td><td>${formatCurrency(saldo)}</td></tr>
+          `;
+        }
+
+        const catEntries = Object.entries(porCategoria).sort((a,b) => (b[1]||0) - (a[1]||0));
+        if (catBody) {
+          catBody.innerHTML = catEntries.length
+            ? catEntries.map(([cat, val]) => `<tr><td>${cat || "(sem categoria)"}</td><td>${formatCurrency(val)}</td></tr>`).join("")
+            : `<tr><td colspan="2">Sem despesas</td></tr>`;
+        }
+
+        const pessoasLista = [
+          ["Helder", porPessoa["Helder"] || 0],
+          ["Goreti", porPessoa["Goreti"] || 0],
+          ["Conjunto", porPessoa["Conjunto"] || 0]
+        ];
+        if (pessoasBody) {
+          pessoasBody.innerHTML = pessoasLista
+            .map(([nome, val]) => `<tr><td>${nome}</td><td>${formatCurrency(val)}</td></tr>`)
+            .join("");
+        }
+
+        // Metas/progresso
+        const metas = loadMetas();
+        const metaH = Number(metas.metaHelder || 0);
+        const metaN = Number(metas.metaNamorada || 0);
+        const metaC = Number(metas.metaConjunto || 0);
+        const metaP = Number(metas.metaPoupanca || 0);
+
+        const realH = porPessoa["Helder"] || 0;
+        const realN = porPessoa["Goreti"] || 0;
+        const realC = porPessoa["Conjunto"] || 0;
+        const realP = poupanca;
+
+        const setMetaRow = (metaValue, realValue, metaLabelId, realLabelId, barId, invertColors=false) => {
+          const mLabel = document.getElementById(metaLabelId);
+          const rLabel = document.getElementById(realLabelId);
+          const bar = document.getElementById(barId);
+          if (mLabel) mLabel.textContent = "Meta: " + (metaValue ? formatCurrency(metaValue) : "-");
+          if (rLabel) rLabel.textContent = "Real: " + formatCurrency(realValue);
+          if (bar) {
+            let perc = metaValue ? (invertColors ? (realValue/metaValue)*100 : (realValue/metaValue)*100) : 0;
+            if (!isFinite(perc)) perc = 0;
+            if (perc > 100) perc = 100;
+            bar.style.width = perc.toFixed(0) + "%";
+          }
+        };
+
+        setMetaRow(metaH, realH, "metaHelderLabel", "realHelderLabel", "metaHelderBar");
+        setMetaRow(metaN, realN, "metaNamoradaLabel", "realNamoradaLabel", "metaNamoradaBar");
+        setMetaRow(metaC, realC, "metaConjuntoLabel", "realConjuntoLabel", "metaConjuntoBar");
+        setMetaRow(metaP, realP, "metaPoupancaLabel", "realPoupancaLabel", "metaPoupancaBar", true);
       }
-
-      // Totais por pessoa (só despesas)
-      const porPessoa = { Helder:0, Goreti:0, Conjunto:0 };
-
-      // Despesas por categoria
-      const porCategoria = {};
-
-      monthData.forEach(item => {
-        const v = Number(item.valor) || 0;
-        if (item.tipo === "despesa") {
-          totalDesp += v;
-          porPessoa[item.pessoa] = (porPessoa[item.pessoa] || 0) + v;
-          porCategoria[item.categoria] = (porCategoria[item.categoria] || 0) + v;
-        } else if (item.tipo === "receita") {
-          totalRec += v;
-        }
-      });
-
-      const poupanca = totalRec - totalDesp;
-      const saldo = saldoInicial + poupanca;
-
-      document.getElementById("totalDespesas").textContent = "-" + formatCurrency(totalDesp);
-      document.getElementById("totalReceitas").textContent = formatCurrency(totalRec);
-      document.getElementById("poupancaMes").textContent = formatCurrency(poupanca);
-      document.getElementById("saldoMes").textContent = formatCurrency(saldo);
-
-      // Metas/progresso
-      const metas = loadMetas();
-      const metaH = Number(metas.metaHelder || 0);
-      const metaN = Number(metas.metaNamorada || 0);
-      const metaC = Number(metas.metaConjunto || 0);
-      const metaP = Number(metas.metaPoupanca || 0);
-
-      const realH = porPessoa["Helder"] || 0;
-      const realN = porPessoa["Goreti"] || 0;
-      const realC = porPessoa["Conjunto"] || 0;
-      const realP = poupanca;
-
-      const setMetaRow = (metaValue, realValue, metaLabelId, realLabelId, barId, invertColors=false) => {
-        const mLabel = document.getElementById(metaLabelId);
-        const rLabel = document.getElementById(realLabelId);
-        const bar = document.getElementById(barId);
-        if (mLabel) mLabel.textContent = "Meta: " + (metaValue ? formatCurrency(metaValue) : "-");
-        if (rLabel) rLabel.textContent = "Real: " + formatCurrency(realValue);
-        if (bar) {
-          let perc = metaValue ? (invertColors ? (realValue/metaValue)*100 : (realValue/metaValue)*100) : 0;
-          if (!isFinite(perc)) perc = 0;
-          if (perc > 100) perc = 100;
-          bar.style.width = perc.toFixed(0) + "%";
-        }
-      };
-
-      setMetaRow(metaH, realH, "metaHelderLabel", "realHelderLabel", "metaHelderBar");
-      setMetaRow(metaN, realN, "metaNamoradaLabel", "realNamoradaLabel", "metaNamoradaBar");
-      setMetaRow(metaC, realC, "metaConjuntoLabel", "realConjuntoLabel", "metaConjuntoBar");
-      setMetaRow(metaP, realP, "metaPoupancaLabel", "realPoupancaLabel", "metaPoupancaBar", true);
-
-      // Destruir gráficos antigos
-      if (chart1) chart1.destroy();
-      if (chart2) chart2.destroy();
-      if (chart3) chart3.destroy();
-
-      // Gráfico barras: despesas, receitas, saldo
-      const ctx1 = document.getElementById("chartDespesas").getContext("2d");
-      chart1 = new Chart(ctx1, {
-        type: "bar",
-        data: {
-          labels: ["Despesas", "Receitas", "Saldo"],
-          datasets: [{
-            label: "Totais do mês (€)",
-            data: [totalDesp, totalRec, saldo],
-            backgroundColor: [
-              "rgba(248,113,113,0.8)",
-              "rgba(74,222,128,0.8)",
-              "rgba(96,165,250,0.9)"
-            ],
-            borderRadius: 8
-          }]
-        },
-        options: {
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { color: "#9ca3af" },
-              grid: { color: "rgba(55,65,81,0.5)" }
-            },
-            x: {
-              ticks: { color: "#9ca3af" },
-              grid: { display: false }
-            }
-          }
-        }
-      });
-
-      // Gráfico barras por categoria
-      const ctx2 = document.getElementById("chartCategorias").getContext("2d");
-      const categoriasLabels = Object.keys(porCategoria);
-      const categoriasValues = Object.values(porCategoria);
-      chart2 = new Chart(ctx2, {
-        type: "bar",
-        data: {
-          labels: categoriasLabels.length ? categoriasLabels : ["Sem despesas"],
-          datasets: [{
-            label: "Total por categoria (€)",
-            data: categoriasValues.length ? categoriasValues : [0],
-            backgroundColor: "rgba(249,115,22,0.8)",
-            borderRadius: 8
-          }]
-        },
-        options: {
-          maintainAspectRatio: false,
-          indexAxis: "y",
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { beginAtZero: true, ticks: { color: "#9ca3af" }, grid: { color: "rgba(55,65,81,0.5)" } },
-            y: { ticks: { color: "#9ca3af" }, grid: { display: false } }
-          }
-        }
-      });
-
-      // Gráfico barras por pessoa
-      const ctx3 = document.getElementById("chartPorPessoa").getContext("2d");
-      const pessoasLabels = ["Helder","Goreti","Conjunto"];
-      const pessoasValores = [porPessoa["Helder"]||0, porPessoa["Goreti"]||0, porPessoa["Conjunto"]||0];
-      chart3 = new Chart(ctx3, {
-        type: "bar",
-        data: {
-          labels: pessoasLabels,
-          datasets: [{
-            label: "Despesa por pessoa (€)",
-            data: pessoasValores,
-            backgroundColor: "rgba(59,130,246,0.85)",
-            borderRadius: 8
-          }]
-        },
-        options: {
-          maintainAspectRatio: false,
-          indexAxis: "y",
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { beginAtZero: true, ticks: { color: "#9ca3af" }, grid: { color: "rgba(55,65,81,0.5)" } },
-            y: { ticks: { color: "#9ca3af" }, grid: { display: false } }
-          }
-        }
-      });
-    }
 
     // Backup
     function exportBackup() {
