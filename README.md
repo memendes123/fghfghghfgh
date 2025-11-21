@@ -50,7 +50,7 @@
   - Guarda o backup `.json` nessa pasta; ele fica disponível para todos os dispositivos com acesso à pasta.
   - Depois de atualizares os dados, substitui o ficheiro existente na pasta partilhada (exporta com o mesmo nome e sobrescreve).
   - Nos outros telemóveis, basta abrir a pasta e descarregar esse `.json` atualizado antes de clicar em **Importar backup**.
-- Se precisares de sincronização automática entre telemóvel/PC sem exportar/importar, terás de usar um serviço com base de dados e autenticação (ex.: Supabase, Firebase). Esta versão offline não envia dados para nenhum servidor.
+- Se precisares de sincronização automática entre telemóvel/PC sem exportar/importar, ativa o conector gratuito de Supabase (abaixo). Por padrão a app continua offline e não envia dados para servidores.
 - Evita partilhar o ficheiro por links públicos; mantém a pasta privada e só partilhada com as contas de quem pode ver os dados.
 
 ## Onde posso hospedar o HTML de forma gratuita e segura?
@@ -60,15 +60,15 @@
   - **Netlify/Cloudflare Pages/Vercel** (gratuitos para uso pessoal): criam um site estático a partir de um upload ou de um repositório Git. Sobe apenas o HTML para evitar expor backups.
 - Em qualquer opção, o login continua obrigatório ao abrir o ficheiro e os dados só ficam no dispositivo até exportares um backup para a tua pasta segura.
 
-## Como criar um backend dedicado gratuito (Supabase)
-Se quiseres sincronização automática (sem exportar/importar manual), precisas de um backend. O plano gratuito do Supabase permite fazê-lo com autenticação e base de dados Postgres.
+## Como criar um backend dedicado gratuito (Supabase) e ligá-lo à app
+Se quiseres sincronização automática (sem exportar/importar manual), usa o conector integrado de Supabase (plano gratuito):
 
 1. **Criar conta e projeto**
-   - Abre <https://supabase.com>, cria uma conta (plano Free) e cria um projeto numa região próxima.
-   - Vai a *Authentication → Providers* e garante que o *Email/Password* está ativo.
+   - Abre <https://supabase.com>, cria uma conta (plano Free) e um projeto numa região próxima.
+   - Vai a *Authentication → Providers* e garante que o *Email/Password* está ativo. Cria utilizadores com o email/password que vais usar nos campos da app.
 
 2. **Criar tabela para guardar o snapshot**
-   - Abre *SQL* e corre este script para uma tabela simples com `jsonb`:
+   - Em *SQL*, corre este script (inclui RLS) para guardar um único snapshot por utilizador:
    ```sql
    create table if not exists public.despesas_sync (
      id uuid primary key default gen_random_uuid(),
@@ -85,44 +85,20 @@ Se quiseres sincronização automática (sem exportar/importar manual), precisas
      for update using (auth.uid() = user_id);
    ```
 
-3. **Gerar chaves e configurar variáveis**
-   - Em *Project Settings → API* copia o **Project URL** e a **anon public key**.
-   - No HTML, adiciona antes do `<script>` principal:
-   ```html
-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-   <script>
-     const SUPABASE_URL = "https://<o_teu_projeto>.supabase.co";
-     const SUPABASE_ANON = "<chave_anon>";
-     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-   </script>
-   ```
+3. **Copiar as chaves públicas**
+   - Em *Project Settings → API* copia o **Project URL** e a **anon public key** (nunca uses a service key no HTML).
 
-4. **Exemplo de sincronização automática**
-   - Depois de o utilizador iniciar sessão na app (user/role atuais), podes enviar e ler o snapshot completo:
-   ```js
-   async function pushSnapshot(userId, snapshot) {
-     const { error } = await supabase
-       .from('despesas_sync')
-       .upsert({ user_id: userId, payload: snapshot, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
-     if (error) console.error('Erro ao gravar no Supabase', error);
-   }
+4. **Configurar no HTML (sem editar código)**
+   - Abre o ficheiro e, na secção *Backend dedicado gratuito (Supabase)*, preenche: Project URL, anon key, email e password do utilizador Supabase.
+   - Marca *Ativar sync automático* e clica em **Guardar configuração**.
+   - Clica em **Pull agora** depois de fazeres login interno (admin/Helder/Goreti) para puxar o snapshot remoto, e o **Push** será feito automaticamente sempre que gravares movimentos/débitos/metas.
 
-   async function pullSnapshot(userId) {
-     const { data, error } = await supabase
-       .from('despesas_sync')
-       .select('payload, updated_at')
-       .eq('user_id', userId)
-       .maybeSingle();
-     if (error) { console.error('Erro ao ler do Supabase', error); return null; }
-     return data?.payload || null;
-   }
-   ```
-   - Para obter o `userId`, autentica-te com `supabase.auth.signInWithPassword({ email, password })` e usa `session.user.id`.
-   - Chama `pushSnapshot` sempre que gravares (movimentos, débitos, metas) e `pullSnapshot` no login/refresh para sincronizar os dados entre telemóveis.
+5. **Como funciona o sync automático**
+   - A app autentica no Supabase com o email/password indicados, faz **pull** ao iniciar sessão e agenda **push** sempre que guardas dados.
+   - Os dados continuam filtrados pelo login interno; o Supabase apenas armazena o JSON cifrado pelo próprio serviço com RLS por utilizador.
 
-5. **Boas práticas de segurança**
-   - Usa sempre o domínio HTTPS gerado pelo Supabase ou um domínio teu com HTTPS.
-   - Não publiques a **service key** no HTML; usa apenas a *anon public key* com RLS ativo.
-   - Mantém o ficheiro HTML privado ou protegido por autenticação se o alojares em GitHub Pages/Netlify.
+6. **Boas práticas de segurança**
+   - Usa sempre HTTPS e mantém o HTML privado; não publiques a chave *service* em lado nenhum.
+   - Se quiseres desativar o backend, desmarca a opção *Ativar sync automático* e guarda novamente.
 
-Com isto consegues ter sincronização automática gratuita. A app continua a exigir login interno, mas passa a guardar/lêr o JSON partilhado do Supabase em todos os dispositivos autenticados.
+Assim tens sincronização automática gratuita entre telemóvel e PC sem mexer em código adicional.

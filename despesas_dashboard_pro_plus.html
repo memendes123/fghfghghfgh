@@ -5,6 +5,7 @@
     <meta charset="UTF-8" />
     <title>Despesas Dashboard PRO+</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -699,15 +700,39 @@
     <section class="card">
       <div class="flex-between">
         <h2>Backend dedicado gratuito (Supabase)</h2>
-        <small style="color:#9ca3af;">Para sincronização automática entre telemóveis/PCs</small>
+        <small style="color:#9ca3af;">Sincronização automática entre telemóveis/PCs</small>
       </div>
-      <ul style="margin:0; padding-left:1.1rem; color:#9ca3af; font-size:0.9rem; line-height:1.45;">
-        <li>Cria conta em <strong>Supabase (plano Free)</strong> e ativa <em>Email/Password</em> em Authentication.</li>
-        <li>Em <em>SQL</em>, cria a tabela <code>despesas_sync</code> com colunas <code>user_id uuid</code> e <code>payload jsonb</code>, com políticas RLS a permitir apenas o dono (ver README para o script completo).</li>
-        <li>Em <em>Project Settings → API</em> copia o <em>Project URL</em> e a <em>anon key</em>. No HTML adiciona a biblioteca <code>@supabase/supabase-js</code> e usa-a para <code>upsert</code>/<code>select</code> o snapshot.</li>
-        <li>Padrão: faz <code>pull</code> no login e <code>push</code> sempre que gravares movimentos/débitos/metas para manter os dispositivos alinhados.</li>
-        <li>Segue o passo-a-passo detalhado no README para não expor chaves e manter o backend seguro.</li>
-      </ul>
+      <p style="margin:0; color:#9ca3af; font-size:0.9rem; line-height:1.45;">
+        Preenche os dados do teu projeto Supabase (plano Free) para ativares sync automático. O login interno continua obrigatório; este passo só serve para alinhar o snapshot entre dispositivos.
+      </p>
+      <div class="flex" style="margin-top:0.6rem; gap:0.6rem;">
+        <div class="col">
+          <label for="supabaseUrl">Project URL</label>
+          <input id="supabaseUrl" placeholder="https://xxxx.supabase.co" autocomplete="off">
+        </div>
+        <div class="col">
+          <label for="supabaseAnon">Anon key</label>
+          <input id="supabaseAnon" placeholder="chave pública anon" autocomplete="off">
+        </div>
+        <div class="col">
+          <label for="supabaseEmail">Email (Supabase Auth)</label>
+          <input id="supabaseEmail" type="email" placeholder="email do utilizador" autocomplete="off">
+        </div>
+        <div class="col">
+          <label for="supabasePassword">Password (Supabase Auth)</label>
+          <input id="supabasePassword" type="password" placeholder="password" autocomplete="off">
+        </div>
+      </div>
+      <div class="flex" style="align-items:center; margin-top:0.5rem; gap:0.75rem;">
+        <label style="display:flex; align-items:center; gap:0.35rem; font-size:0.85rem; color:#e5e7eb;">
+          <input type="checkbox" id="supabaseEnable"> Ativar sync automático (pull no login, push ao gravar)
+        </label>
+        <button class="btn-primary btn-small" id="saveSupabaseCfg">Guardar configuração</button>
+        <button class="btn-secondary btn-small" id="pullSupabase">Pull agora</button>
+        <button class="btn-secondary btn-small" id="pushSupabase">Push agora</button>
+        <button class="btn-danger" id="logoutSupabase">Sair do Supabase</button>
+      </div>
+      <div id="supabaseStatus" style="margin-top:0.45rem; font-size:0.86rem; color:#9ca3af;"></div>
     </section>
 
     <!-- LISTA DE MOVIMENTOS -->
@@ -749,6 +774,7 @@
     const STORAGE_SETTINGS = "settingsPRO_v1";
     const STORAGE_SESSION = "sessionPRO_v1";
     const SYNC_CHANNEL_NAME = "despesasPRO_sync";
+    const STORAGE_SUPABASE = "supabaseCfg_v1";
 
     // Utils
     function formatCurrency(value) {
@@ -781,6 +807,7 @@
     function saveUsers(arr) {
       localStorage.setItem(STORAGE_USERS, JSON.stringify(arr));
       broadcastSync();
+      queueSupabasePush();
     }
     function ensureDefaultUsers() {
       let users = loadUsers();
@@ -809,6 +836,7 @@
     function saveSettings(obj) {
       localStorage.setItem(STORAGE_SETTINGS, JSON.stringify(obj));
       broadcastSync();
+      queueSupabasePush();
     }
 
     function getSessionUser() {
@@ -845,6 +873,10 @@
 
     let syncChannel = null;
     let lastSyncTs = 0;
+    let supabaseClient = null;
+    let supabaseClientUrl = "";
+    let supabaseSession = null;
+    let supabasePushTimer = null;
     function getFullSnapshot() {
       return {
         movimentos: loadMovimentos(),
@@ -867,6 +899,107 @@
       if (data.users) localStorage.setItem(STORAGE_USERS, JSON.stringify(data.users));
       if (data.settings) localStorage.setItem(STORAGE_SETTINGS, JSON.stringify(data.settings));
       if (typeof data.session !== "undefined") localStorage.setItem(STORAGE_SESSION, data.session);
+    }
+
+    // Supabase helpers
+    function loadSupabaseConfig() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_SUPABASE) || "{}"); }
+      catch { return {}; }
+    }
+    function saveSupabaseConfig(cfg) {
+      localStorage.setItem(STORAGE_SUPABASE, JSON.stringify(cfg || {}));
+    }
+    function supabaseConfigEnabled(cfg) {
+      return !!(cfg && cfg.enabled && cfg.url && cfg.anon && cfg.email && cfg.password);
+    }
+    function setSupabaseStatus(msg, isError=false) {
+      const el = document.getElementById("supabaseStatus");
+      if (!el) return;
+      el.textContent = msg || "";
+      el.style.color = isError ? "#fca5a5" : "#9ca3af";
+    }
+    function ensureSupabaseClient(cfg) {
+      if (!window.supabase || !window.supabase.createClient) {
+        setSupabaseStatus("Biblioteca Supabase não carregada.", true);
+        return null;
+      }
+      if (!supabaseClient || supabaseClientUrl !== cfg.url) {
+        supabaseClient = window.supabase.createClient(cfg.url, cfg.anon);
+        supabaseClientUrl = cfg.url;
+      }
+      return supabaseClient;
+    }
+    async function supabaseLogin() {
+      const cfg = loadSupabaseConfig();
+      if (!supabaseConfigEnabled(cfg)) return null;
+      const client = ensureSupabaseClient(cfg);
+      if (!client) return null;
+      if (supabaseSession && supabaseSession.user) return supabaseSession.user;
+      setSupabaseStatus("A iniciar sessão no Supabase...");
+      const { data, error } = await client.auth.signInWithPassword({ email: cfg.email, password: cfg.password });
+      if (error) {
+        setSupabaseStatus("Falha no login Supabase: " + error.message, true);
+        return null;
+      }
+      supabaseSession = data.session;
+      setSupabaseStatus("Autenticado no Supabase.");
+      return data.session?.user || null;
+    }
+    async function supabasePullLatest(showEmptyMsg=true) {
+      const user = await supabaseLogin();
+      if (!user) return;
+      setSupabaseStatus("A obter dados do Supabase...");
+      const { data, error } = await supabaseClient
+        .from('despesas_sync')
+        .select('payload, updated_at')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (error) {
+        setSupabaseStatus("Erro a ler do Supabase: " + error.message, true);
+        return;
+      }
+      if (data && data.payload) {
+        const currentSessionName = localStorage.getItem(STORAGE_SESSION);
+        applySnapshot(data.payload);
+        if (currentSessionName) localStorage.setItem(STORAGE_SESSION, currentSessionName);
+        renderTudo();
+        const stamp = data.updated_at ? data.updated_at.replace('T',' ').slice(0,19) : new Date().toLocaleString();
+        setSupabaseStatus("Dados importados do Supabase em " + stamp + ".");
+      } else if (showEmptyMsg) {
+        setSupabaseStatus("Ainda não há snapshot remoto. Faz um push para criar.");
+      }
+    }
+    async function supabasePushLatest() {
+      const user = await supabaseLogin();
+      if (!user) return;
+      setSupabaseStatus("A gravar snapshot no Supabase...");
+      const payload = getFullSnapshot();
+      const { error } = await supabaseClient
+        .from('despesas_sync')
+        .upsert({ user_id: user.id, payload, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+      if (error) {
+        setSupabaseStatus("Erro ao gravar no Supabase: " + error.message, true);
+        return;
+      }
+      setSupabaseStatus("Snapshot enviado para o Supabase.");
+    }
+    function queueSupabasePush() {
+      const cfg = loadSupabaseConfig();
+      if (!supabaseConfigEnabled(cfg)) return;
+      clearTimeout(supabasePushTimer);
+      supabasePushTimer = setTimeout(() => {
+        supabasePushLatest().catch(err => setSupabaseStatus("Erro de sync: " + (err?.message || err), true));
+      }, 400);
+    }
+    async function supabaseLogout() {
+      if (supabaseClient) await supabaseClient.auth.signOut();
+      supabaseSession = null;
+      setSupabaseStatus("Sessão Supabase terminada.");
+    }
+    async function supabaseAutoPullAfterLogin() {
+      const cfg = loadSupabaseConfig();
+      if (!supabaseConfigEnabled(cfg)) return;
+      await supabasePullLatest(false);
     }
     function updateSyncStatus(msg) {
       const el = document.getElementById("syncStatus");
@@ -902,6 +1035,7 @@
     function saveMovimentos(arr) {
       localStorage.setItem(STORAGE_MAIN, JSON.stringify(arr));
       broadcastSync();
+      queueSupabasePush();
     }
     function loadCategorias() {
       try {
@@ -914,6 +1048,7 @@
     function saveCategorias(arr) {
       localStorage.setItem(STORAGE_CATS, JSON.stringify(arr));
       broadcastSync();
+      queueSupabasePush();
     }
     function loadDebitos() {
       try { return JSON.parse(localStorage.getItem(STORAGE_DEBITS) || "[]"); }
@@ -922,6 +1057,7 @@
     function saveDebitos(arr) {
       localStorage.setItem(STORAGE_DEBITS, JSON.stringify(arr));
       broadcastSync();
+      queueSupabasePush();
     }
     function loadMetas() {
       try { return JSON.parse(localStorage.getItem(STORAGE_GOALS) || "{}"); }
@@ -930,6 +1066,7 @@
     function saveMetas(obj) {
       localStorage.setItem(STORAGE_GOALS, JSON.stringify(obj));
       broadcastSync();
+      queueSupabasePush();
     }
     function loadNotifState() {
       try { return JSON.parse(localStorage.getItem(STORAGE_NOTIF) || "{}"); }
@@ -1027,6 +1164,7 @@
     function saveSaldoInicial(v) {
       localStorage.setItem(STORAGE_SALDO, String(v));
       broadcastSync();
+      queueSupabasePush();
     }
 
     function renderPessoaSelect(select, allowed) {
@@ -1499,6 +1637,47 @@
       // Obriga um novo login a cada abertura para não herdar sessões antigas
       logoutUser();
 
+      // Supabase config UI
+      const supCfg = loadSupabaseConfig();
+      const supUrlInput = document.getElementById("supabaseUrl");
+      const supAnonInput = document.getElementById("supabaseAnon");
+      const supEmailInput = document.getElementById("supabaseEmail");
+      const supPassInput = document.getElementById("supabasePassword");
+      const supEnable = document.getElementById("supabaseEnable");
+      const saveSupBtn = document.getElementById("saveSupabaseCfg");
+      const pullSupBtn = document.getElementById("pullSupabase");
+      const pushSupBtn = document.getElementById("pushSupabase");
+      const logoutSupBtn = document.getElementById("logoutSupabase");
+
+      if (supUrlInput) supUrlInput.value = supCfg.url || "";
+      if (supAnonInput) supAnonInput.value = supCfg.anon || "";
+      if (supEmailInput) supEmailInput.value = supCfg.email || "";
+      if (supPassInput) supPassInput.value = supCfg.password || "";
+      if (supEnable) supEnable.checked = !!supCfg.enabled;
+      if (supabaseConfigEnabled(supCfg)) {
+        setSupabaseStatus("Configuração Supabase carregada. Faz login interno e carrega Pull para trazer os dados.");
+      }
+
+      if (saveSupBtn) {
+        saveSupBtn.addEventListener("click", () => {
+          const cfg = {
+            url: (supUrlInput?.value || "").trim(),
+            anon: (supAnonInput?.value || "").trim(),
+            email: (supEmailInput?.value || "").trim(),
+            password: supPassInput?.value || "",
+            enabled: !!supEnable?.checked
+          };
+          saveSupabaseConfig(cfg);
+          supabaseSession = null;
+          setSupabaseStatus(cfg.enabled
+            ? "Configuração guardada. Usa Pull para carregar do Supabase e Push ao gravar."
+            : "Supabase desativado. Guarda novamente para voltar a ativar.");
+        });
+      }
+      if (pullSupBtn) pullSupBtn.addEventListener("click", () => supabasePullLatest());
+      if (pushSupBtn) pushSupBtn.addEventListener("click", () => supabasePushLatest());
+      if (logoutSupBtn) logoutSupBtn.addEventListener("click", () => { supabaseLogout(); });
+
       // saldo inicial
       const saldoInicialInput = document.getElementById("saldoInicial");
       if (saldoInicialInput) {
@@ -1531,6 +1710,7 @@
             setSessionUser(found.username);
             document.getElementById("loginPassword").value = "";
             renderTudo();
+            supabaseAutoPullAfterLogin();
           } else {
             alert("Utilizador ou password inválidos.");
           }
