@@ -310,6 +310,8 @@
       </div>
     </section>
 
+    <div id="appContent" style="display:none;">
+
     <!-- GESTÃO DE UTILIZADORES (APENAS ADMIN) -->
     <section class="card" data-admin-only="true">
       <div class="flex-between">
@@ -618,13 +620,26 @@
       </div>
     </section>
 
+    <!-- DICAS PARA TELEMÓVEL -->
+    <section class="card">
+      <div class="flex-between">
+        <h2>Usar no telemóvel (iPhone/Android)</h2>
+        <small style="color:#9ca3af;">Funciona offline porque fica guardado no próprio dispositivo</small>
+      </div>
+      <ul style="margin:0; padding-left:1.1rem; color:#9ca3af; font-size:0.9rem; line-height:1.45;">
+        <li><strong>iPhone:</strong> guarda este ficheiro no iCloud Drive/Arquivos, abre no Safari e toca em <em>Partilhar</em> → <em>Adicionar ao ecrã principal</em>. Passa a ter um ícone que abre a app em ecrã inteiro.</li>
+        <li><strong>Android:</strong> abre o ficheiro no Chrome, usa os três pontos → <em>Adicionar à tela inicial</em>.</li>
+        <li>Os dados ficam em <code>localStorage</code> de cada telemóvel. Para dois telemóveis iguais, partilha o backup .json pelo Google Drive/iCloud, importa no segundo e volta a exportar sempre que houver alterações.</li>
+      </ul>
+    </section>
+
     <!-- SINCRONIZAÇÃO / USO EM MAIS DISPOSITIVOS -->
     <section class="card">
       <div class="flex-between">
         <h2>Sincronização em simultâneo</h2>
-        <small style="color:#9ca3af;">Funciona em vários separadores e dispositivos com o mesmo ficheiro/site aberto</small>
+        <small style="color:#9ca3af;">Atualiza em tempo real entre separadores/PCs com o mesmo ficheiro aberto</small>
       </div>
-      <p style="margin:0; color:#9ca3af; font-size:0.86rem;">Partilha este ficheiro/site com o outro telemóvel. Os dados propagam pelo canal seguro eficiente (BroadcastChannel/localStorage). Podes ainda usar export/import para garantir consistência.</p>
+      <p style="margin:0; color:#9ca3af; font-size:0.86rem;">Em telemóveis distintos usa o backup (.json) para alinhar dados: exporta num e importa noutro. O botão abaixo força a sincronização instantânea apenas entre janelas que estejam a correr o mesmo ficheiro.</p>
       <div style="margin-top:0.6rem;" class="flex">
         <button class="btn-primary btn-small" id="forceSyncBtn">Forçar sincronização agora</button>
         <div id="syncStatus" style="font-size:0.86rem; color:#9ca3af;"></div>
@@ -654,6 +669,8 @@
         </table>
       </div>
     </section>
+
+    </div> <!-- /appContent -->
 
   </main>
 
@@ -972,6 +989,9 @@
 
       const logoutBtn = document.getElementById("logoutBtn");
       if (logoutBtn) logoutBtn.style.display = user ? "inline-flex" : "none";
+
+      const appContent = document.getElementById("appContent");
+      if (appContent) appContent.style.display = user ? "block" : "none";
 
       document.querySelectorAll('[data-admin-only="true"]').forEach(sec => {
         sec.style.display = (user && user.role === "admin") ? "block" : "none";
