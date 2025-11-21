@@ -733,6 +733,7 @@
           <input type="checkbox" id="supabaseEnable"> Ativar sync automático (pull no login, push ao gravar)
         </label>
         <button class="btn-primary btn-small" id="saveSupabaseCfg">Guardar configuração</button>
+        <button class="btn-secondary btn-small" id="testSupabaseLogin">Testar login</button>
         <button class="btn-secondary btn-small" id="pullSupabase">Pull agora</button>
         <button class="btn-secondary btn-small" id="pushSupabase">Push agora</button>
         <button class="btn-danger" id="logoutSupabase">Sair do Supabase</button>
@@ -946,7 +947,10 @@
       setSupabaseStatus("A iniciar sessão no Supabase...");
       const { data, error } = await client.auth.signInWithPassword({ email: cfg.email, password: cfg.password });
       if (error) {
-        setSupabaseStatus("Falha no login Supabase: " + error.message, true);
+        const hint = error.message?.toLowerCase().includes("invalid")
+          ? " Cria este utilizador em Authentication → Users (ou confirma o email) e volta a tentar."
+          : "";
+        setSupabaseStatus("Falha no login Supabase: " + error.message + hint, true);
         return null;
       }
       supabaseSession = data.session;
@@ -1663,6 +1667,7 @@
       const supPassInput = document.getElementById("supabasePassword");
       const supEnable = document.getElementById("supabaseEnable");
       const saveSupBtn = document.getElementById("saveSupabaseCfg");
+      const testSupBtn = document.getElementById("testSupabaseLogin");
       const pullSupBtn = document.getElementById("pullSupabase");
       const pushSupBtn = document.getElementById("pushSupabase");
       const logoutSupBtn = document.getElementById("logoutSupabase");
@@ -1690,6 +1695,12 @@
           setSupabaseStatus(cfg.enabled
             ? "Configuração guardada. Usa Pull para carregar do Supabase e Push ao gravar."
             : "Supabase desativado. Guarda novamente para voltar a ativar.");
+        });
+      }
+      if (testSupBtn) {
+        testSupBtn.addEventListener("click", async () => {
+          const user = await supabaseLogin();
+          if (user) setSupabaseStatus("Login Supabase válido para " + (user.email || "utilizador"));
         });
       }
       if (pullSupBtn) pullSupBtn.addEventListener("click", () => supabasePullLatest());

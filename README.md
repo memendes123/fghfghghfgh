@@ -65,7 +65,7 @@ Se quiseres sincronização automática (sem exportar/importar manual), usa o co
 
 1. **Criar conta e projeto**
    - Abre <https://supabase.com>, cria uma conta (plano Free) e um projeto numa região próxima.
-   - Vai a *Authentication → Providers* e garante que o *Email/Password* está ativo. Cria utilizadores com o email/password que vais usar nos campos da app.
+   - Vai a *Authentication → Providers* e garante que o *Email/Password* está ativo. Em *Authentication → Users* cria o utilizador com o email/password que vais preencher na app. (Se tiveres confirmação de email ativa, confirma esse email ou desativa a confirmação para logar de imediato.)
 
 2. **Criar tabela para guardar o snapshot**
    - Em *SQL*, corre este script (inclui RLS) para guardar um único snapshot por utilizador:
@@ -91,6 +91,7 @@ Se quiseres sincronização automática (sem exportar/importar manual), usa o co
 
 4. **Configurar no HTML (sem editar código)**
    - Abre o ficheiro e, na secção *Backend dedicado gratuito (Supabase)*, preenche: Project URL, anon key, email e password do utilizador Supabase.
+   - Clica em **Testar login** para garantir que as credenciais são válidas (se disser "credenciais inválidas", cria/edita o utilizador em *Authentication → Users* ou confirma o email).
    - Marca *Ativar sync automático* e clica em **Guardar configuração**.
    - Clica em **Pull agora** depois de fazeres login interno (admin/Helder/Goreti) para puxar o snapshot remoto, e o **Push** será feito automaticamente sempre que gravares movimentos/débitos/metas.
 
