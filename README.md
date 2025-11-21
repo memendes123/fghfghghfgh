@@ -1,6 +1,11 @@
 # Despesas Dashboard PRO+
 
 ## Como começar
+### Abrir no iPhone/iPad quando só aparece o código
+- Depois de fazer download do `despesas_dashboard_pro_plus.html`, **não** uses a pré-visualização de texto da app Ficheiros/Drive (é isso que mostra o código cru).
+- Toca em **Partilhar** → **Abrir no Safari** (ou **Abrir no Chrome**). Assim que o ficheiro abrir no navegador, adiciona-o ao ecrã principal para não precisares de repetir.
+- Se já estiver no Safari e continuares a ver código, confirma que o ficheiro termina em `.html` (renomeia se necessário) e recarrega. O login interno continuará a ser pedido.
+
 1. Abre o ficheiro `despesas_dashboard_pro_plus.html` diretamente no browser (Chrome, Edge ou Safari). Podes guardá-lo no iCloud Drive/Google Drive e abri-lo localmente.
 2. Sempre que abres o ficheiro, a sessão é automaticamente encerrada (o painel fica escondido e as tabelas são limpas) para impedir que dados fiquem visíveis. O primeiro ecrã é sempre o **Login**.
 3. Introduz `admin` / `admin` para entrares como administrador e muda de imediato essa password.
