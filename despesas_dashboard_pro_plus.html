@@ -192,6 +192,12 @@
       margin-top: 0.5rem;
       font-size: 0.83rem;
     }
+
+    .chart-canvas {
+      width: 100%;
+      height: 240px;
+      max-height: 260px;
+    }
     th, td {
       padding: 0.45rem 0.4rem;
       border-bottom: 1px solid #1f2933;
@@ -274,7 +280,7 @@
 <body>
   <header>
     <h1>Despesas Dashboard PRO+</h1>
-    <p>Despesas Helder • Namorada • Conjunto · Débitos diretos · Metas · Planeamento · Backup</p>
+    <p>Despesas Helder • Goreti • Conjunto · Débitos diretos · Metas · Planeamento · Backup</p>
   </header>
 
   <div id="notifArea" class="notif-bar">
@@ -283,6 +289,82 @@
   </div>
 
   <main>
+
+    <!-- AUTENTICAÇÃO & SESSÃO -->
+    <section class="card">
+      <div class="flex-between">
+        <h2>Login, passwords e segurança</h2>
+        <small style="color:#9ca3af;">Admin pode mudar passwords, remover ou criar utilizadores</small>
+      </div>
+      <div class="flex" style="align-items:flex-end;">
+        <div class="col">
+          <label for="loginUsername">Utilizador</label>
+          <input id="loginUsername" placeholder="Ex: admin, Helder, Goreti">
+        </div>
+        <div class="col">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="••••••">
+        </div>
+        <div class="col" style="flex:0 0 140px;">
+          <button class="btn-primary btn-small" id="loginBtn">Entrar</button>
+          <button class="btn-secondary btn-small" id="logoutBtn" style="margin-left:0.4rem;">Sair</button>
+        </div>
+      </div>
+      <div style="margin-top:0.4rem; font-size:0.86rem;">
+        <div id="sessionStatus" style="margin-bottom:0.25rem;"></div>
+        <div style="color:#9ca3af;">Predefinição: admin / admin. Muda já a password!</div>
+      </div>
+    </section>
+
+    <div id="appContent" style="display:none;">
+
+    <!-- GESTÃO DE UTILIZADORES (APENAS ADMIN) -->
+    <section class="card" data-admin-only="true">
+      <div class="flex-between">
+        <h2>Gestão de utilizadores</h2>
+        <small style="color:#9ca3af;">Admin consegue repor passes, adicionar/remover utilizadores</small>
+      </div>
+      <div class="flex" style="align-items:flex-end;">
+        <div class="col">
+          <label for="newUserName">Novo utilizador</label>
+          <input id="newUserName" placeholder="Ex: Helder2">
+        </div>
+        <div class="col">
+          <label for="newUserPass">Password inicial</label>
+          <input type="password" id="newUserPass" placeholder="Define aqui">
+        </div>
+        <div class="col">
+          <label for="newUserRole">Perfil</label>
+          <select id="newUserRole">
+            <option value="admin">Admin</option>
+            <option value="Helder">Helder</option>
+            <option value="Goreti">Goreti</option>
+            <option value="Conjunto">Conjunto</option>
+          </select>
+        </div>
+        <div class="col" style="flex:0 0 140px;">
+          <button class="btn-primary btn-small" id="addUserBtn">Criar utilizador</button>
+        </div>
+      </div>
+      <div style="margin-top:0.6rem; font-size:0.86rem;">
+        <strong>Utilizadores ativos:</strong>
+        <div id="userList" style="margin-top:0.35rem; display:flex; flex-wrap:wrap; gap:0.35rem;"></div>
+      </div>
+    </section>
+
+    <!-- PERMISSÕES DE ACESSO AO "CONJUNTO" -->
+    <section class="card" data-admin-only="true">
+      <div class="flex-between">
+        <h2>Regras de quem vê o Conjunto</h2>
+        <small style="color:#9ca3af;">Helder nunca vê Goreti e vice-versa. Aqui decides quem pode ver o Conjunto.</small>
+      </div>
+      <div class="flex" style="align-items:center;">
+        <button class="btn-secondary btn-small" id="adminOnlyConjunto">Conjunto só para Admin</button>
+        <button class="btn-primary btn-small" id="toggleHelderConjunto">Helder pode ver Conjunto</button>
+        <button class="btn-primary btn-small" id="toggleGoretiConjunto">Goreti pode ver Conjunto</button>
+      </div>
+      <div id="permissionsStatus" style="margin-top:0.6rem; font-size:0.86rem; color:#9ca3af;"></div>
+    </section>
 
     <!-- DASHBOARD -->
     <section class="card">
@@ -329,7 +411,7 @@
           <div class="pill-progress"><div id="metaHelderBar" class="pill-progress-inner"></div></div>
         </div>
         <div class="stat">
-          <div class="stat-title">Namorada · meta vs real</div>
+          <div class="stat-title">Goreti · meta vs real</div>
           <div class="flex-between" style="font-size:0.78rem;">
             <span id="metaNamoradaLabel">Meta: - €</span>
             <span id="realNamoradaLabel">Real: - €</span>
@@ -355,9 +437,9 @@
       </div>
 
       <div style="margin-top:1.1rem; display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:0.75rem;">
-        <canvas id="chartDespesas"></canvas>
-        <canvas id="chartCategorias"></canvas>
-        <canvas id="chartPorPessoa"></canvas>
+        <canvas id="chartDespesas" class="chart-canvas"></canvas>
+        <canvas id="chartCategorias" class="chart-canvas"></canvas>
+        <canvas id="chartPorPessoa" class="chart-canvas"></canvas>
       </div>
     </section>
 
@@ -393,7 +475,7 @@
           <label for="pessoa">Pessoa</label>
           <select id="pessoa">
             <option value="Helder">Helder</option>
-            <option value="Namorada">Namorada</option>
+            <option value="Goreti">Goreti</option>
             <option value="Conjunto">Conjunto</option>
           </select>
         </div>
@@ -430,7 +512,7 @@
           <label for="ddPessoa">Pessoa</label>
           <select id="ddPessoa">
             <option value="Helder">Helder</option>
-            <option value="Namorada">Namorada</option>
+            <option value="Goreti">Goreti</option>
             <option value="Conjunto">Conjunto</option>
           </select>
         </div>
@@ -463,7 +545,7 @@
           <input type="number" id="metaHelder" step="0.01" placeholder="Ex: 600">
         </div>
         <div class="col">
-          <label for="metaNamorada">Meta despesas Namorada / mês (€)</label>
+          <label for="metaNamorada">Meta despesas Goreti / mês (€)</label>
           <input type="number" id="metaNamorada" step="0.01" placeholder="Ex: 400">
         </div>
         <div class="col">
@@ -525,6 +607,51 @@
       </div>
     </section>
 
+    <!-- EXPORTAÇÃO PARA EXCEL/CSV & GOOGLE SHEETS -->
+    <section class="card">
+      <div class="flex-between">
+        <h2>Exportação rápida</h2>
+        <small style="color:#9ca3af;">Excel/CSV e atalho para colar diretamente no Google Sheets</small>
+      </div>
+      <div class="flex" style="align-items:center; margin-top:0.6rem;">
+        <div class="col" style="flex:0 0 180px;">
+          <button class="btn-primary btn-small" id="exportCsvBtn">Exportar Excel/CSV</button>
+        </div>
+        <div class="col" style="flex:0 0 220px;">
+          <button class="btn-secondary btn-small" id="copySheetsBtn">Copiar para Google Sheets</button>
+        </div>
+        <div class="col" style="font-size:0.78rem; color:#9ca3af;">
+          Abre o Google Sheets e cola (Ctrl+V) para teres os dados atualizados ou usa o CSV no Excel.
+        </div>
+      </div>
+    </section>
+
+    <!-- DICAS PARA TELEMÓVEL -->
+    <section class="card">
+      <div class="flex-between">
+        <h2>Usar no telemóvel (iPhone/Android)</h2>
+        <small style="color:#9ca3af;">Funciona offline porque fica guardado no próprio dispositivo</small>
+      </div>
+      <ul style="margin:0; padding-left:1.1rem; color:#9ca3af; font-size:0.9rem; line-height:1.45;">
+        <li><strong>iPhone:</strong> guarda este ficheiro no iCloud Drive/Arquivos, abre no Safari e toca em <em>Partilhar</em> → <em>Adicionar ao ecrã principal</em>. Passa a ter um ícone que abre a app em ecrã inteiro.</li>
+        <li><strong>Android:</strong> abre o ficheiro no Chrome, usa os três pontos → <em>Adicionar à tela inicial</em>.</li>
+        <li>Os dados ficam em <code>localStorage</code> de cada telemóvel. Para dois telemóveis iguais, partilha o backup .json pelo Google Drive/iCloud, importa no segundo e volta a exportar sempre que houver alterações.</li>
+      </ul>
+    </section>
+
+    <!-- SINCRONIZAÇÃO / USO EM MAIS DISPOSITIVOS -->
+    <section class="card">
+      <div class="flex-between">
+        <h2>Sincronização em simultâneo</h2>
+        <small style="color:#9ca3af;">Atualiza em tempo real entre separadores/PCs com o mesmo ficheiro aberto</small>
+      </div>
+      <p style="margin:0; color:#9ca3af; font-size:0.86rem;">Em telemóveis distintos usa o backup (.json) para alinhar dados: exporta num e importa noutro. O botão abaixo força a sincronização instantânea apenas entre janelas que estejam a correr o mesmo ficheiro.</p>
+      <div style="margin-top:0.6rem;" class="flex">
+        <button class="btn-primary btn-small" id="forceSyncBtn">Forçar sincronização agora</button>
+        <div id="syncStatus" style="font-size:0.86rem; color:#9ca3af;"></div>
+      </div>
+    </section>
+
     <!-- LISTA DE MOVIMENTOS -->
     <section class="card">
       <div class="flex-between">
@@ -549,6 +676,8 @@
       </div>
     </section>
 
+    </div> <!-- /appContent -->
+
   </main>
 
   <script>
@@ -558,6 +687,10 @@
     const STORAGE_GOALS  = "metasPRO_v2";
     const STORAGE_NOTIF  = "notifPRO_v2";
     const STORAGE_SALDO  = "saldoInicialPRO_v2";
+    const STORAGE_USERS  = "usersPRO_v1";
+    const STORAGE_SETTINGS = "settingsPRO_v1";
+    const STORAGE_SESSION = "sessionPRO_v1";
+    const SYNC_CHANNEL_NAME = "despesasPRO_sync";
 
     // Utils
     function formatCurrency(value) {
@@ -576,6 +709,133 @@
       return arr.filter(item => item.data && item.data.startsWith(monthStr));
     }
 
+    const encoder = new TextEncoder();
+    function simpleHash(str) {
+      // Base64 da string para não ficar password em claro.
+      return btoa(String.fromCharCode(...encoder.encode(str)));
+    }
+
+    // Users & permissões
+    function loadUsers() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_USERS) || "[]"); }
+      catch { return []; }
+    }
+    function saveUsers(arr) {
+      localStorage.setItem(STORAGE_USERS, JSON.stringify(arr));
+      broadcastSync();
+    }
+    function ensureDefaultUsers() {
+      let users = loadUsers();
+      if (!users.length) {
+        users = [
+          { username:"admin", role:"admin", pass: simpleHash("admin") },
+          { username:"Helder", role:"Helder", pass: simpleHash("1234") },
+          { username:"Goreti", role:"Goreti", pass: simpleHash("1234") },
+          { username:"Conjunto", role:"Conjunto", pass: simpleHash("1234") }
+        ];
+      }
+      // garante que o admin existe sempre
+      if (!users.some(u => u.username === "admin")) {
+        users.push({ username:"admin", role:"admin", pass: simpleHash("admin") });
+      }
+      saveUsers(users);
+    }
+
+    function loadSettings() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_SETTINGS) || "{}");
+      } catch {
+        return {};
+      }
+    }
+    function saveSettings(obj) {
+      localStorage.setItem(STORAGE_SETTINGS, JSON.stringify(obj));
+      broadcastSync();
+    }
+
+    function getSessionUser() {
+      const sessionName = localStorage.getItem(STORAGE_SESSION);
+      const users = loadUsers();
+      return users.find(u => u.username === sessionName) || null;
+    }
+    function setSessionUser(username) {
+      localStorage.setItem(STORAGE_SESSION, username || "");
+      broadcastSync();
+    }
+    function logoutUser() {
+      setSessionUser("");
+    }
+
+    function allowedPessoas(user) {
+      const settings = loadSettings();
+      if (user && user.role === "admin") return ["Helder","Goreti","Conjunto"];
+      if (!user) return [];
+      if (user.role === "Helder") {
+        return settings.allowHelderConjunto ? ["Helder","Conjunto"] : ["Helder"];
+      }
+      if (user.role === "Goreti") {
+        return settings.allowGoretiConjunto ? ["Goreti","Conjunto"] : ["Goreti"];
+      }
+      if (user.role === "Conjunto") return ["Conjunto"];
+      return [];
+    }
+    function filterDataForUser(data) {
+      const user = getSessionUser();
+      const allowed = allowedPessoas(user);
+      return data.filter(item => allowed.includes(item.pessoa));
+    }
+
+    let syncChannel = null;
+    let lastSyncTs = 0;
+    function getFullSnapshot() {
+      return {
+        movimentos: loadMovimentos(),
+        categorias: loadCategorias(),
+        debitos: loadDebitos(),
+        metas: loadMetas(),
+        saldoInicial: loadSaldoInicial(),
+        users: loadUsers(),
+        settings: loadSettings(),
+        session: localStorage.getItem(STORAGE_SESSION) || ""
+      };
+    }
+    function applySnapshot(data) {
+      if (!data) return;
+      if (data.movimentos) localStorage.setItem(STORAGE_MAIN, JSON.stringify(data.movimentos));
+      if (data.categorias) localStorage.setItem(STORAGE_CATS, JSON.stringify(data.categorias));
+      if (data.debitos) localStorage.setItem(STORAGE_DEBITS, JSON.stringify(data.debitos));
+      if (data.metas) localStorage.setItem(STORAGE_GOALS, JSON.stringify(data.metas));
+      if (typeof data.saldoInicial !== "undefined") localStorage.setItem(STORAGE_SALDO, String(data.saldoInicial));
+      if (data.users) localStorage.setItem(STORAGE_USERS, JSON.stringify(data.users));
+      if (data.settings) localStorage.setItem(STORAGE_SETTINGS, JSON.stringify(data.settings));
+      if (typeof data.session !== "undefined") localStorage.setItem(STORAGE_SESSION, data.session);
+    }
+    function updateSyncStatus(msg) {
+      const el = document.getElementById("syncStatus");
+      if (el) el.textContent = msg || "";
+    }
+    function broadcastSync() {
+      if (!syncChannel) return;
+      const payload = { ts: Date.now(), snapshot: getFullSnapshot() };
+      syncChannel.postMessage(payload);
+      updateSyncStatus("Sincronizado às " + new Date(payload.ts).toLocaleTimeString());
+    }
+    function setupSyncChannel() {
+      if ("BroadcastChannel" in window) {
+        syncChannel = new BroadcastChannel(SYNC_CHANNEL_NAME);
+        syncChannel.onmessage = (ev) => {
+          if (!ev.data || !ev.data.ts || ev.data.ts <= lastSyncTs) return;
+          lastSyncTs = ev.data.ts;
+          applySnapshot(ev.data.snapshot);
+          renderTudo();
+          updateSyncStatus("Atualizado a partir de outro dispositivo às " + new Date(ev.data.ts).toLocaleTimeString());
+        };
+        updateSyncStatus("Canal ativo");
+      } else {
+        updateSyncStatus("Browser sem BroadcastChannel. Usa export/import para sincronizar.");
+      }
+    }
+
     // Storage helpers
     function loadMovimentos() {
       try { return JSON.parse(localStorage.getItem(STORAGE_MAIN) || "[]"); }
@@ -583,6 +843,7 @@
     }
     function saveMovimentos(arr) {
       localStorage.setItem(STORAGE_MAIN, JSON.stringify(arr));
+      broadcastSync();
     }
     function loadCategorias() {
       try {
@@ -594,6 +855,7 @@
     }
     function saveCategorias(arr) {
       localStorage.setItem(STORAGE_CATS, JSON.stringify(arr));
+      broadcastSync();
     }
     function loadDebitos() {
       try { return JSON.parse(localStorage.getItem(STORAGE_DEBITS) || "[]"); }
@@ -601,6 +863,7 @@
     }
     function saveDebitos(arr) {
       localStorage.setItem(STORAGE_DEBITS, JSON.stringify(arr));
+      broadcastSync();
     }
     function loadMetas() {
       try { return JSON.parse(localStorage.getItem(STORAGE_GOALS) || "{}"); }
@@ -608,6 +871,7 @@
     }
     function saveMetas(obj) {
       localStorage.setItem(STORAGE_GOALS, JSON.stringify(obj));
+      broadcastSync();
     }
     function loadNotifState() {
       try { return JSON.parse(localStorage.getItem(STORAGE_NOTIF) || "{}"); }
@@ -643,14 +907,21 @@
 
     // Débitos diretos UI
     function renderDebitosUI() {
-      const debitos = loadDebitos();
+      const sessionUser = getSessionUser();
       const tbody = document.getElementById("tabelaDebitos");
       if (!tbody) return;
+
+      if (!sessionUser) {
+        tbody.innerHTML = "";
+        return;
+      }
+
+      const debitos = filterDataForUser(loadDebitos());
       tbody.innerHTML = "";
       debitos
         .slice()
         .sort((a,b) => (Number(a.dia)||0) - (Number(b.dia)||0))
-        .forEach((d, idx) => {
+        .forEach((d) => {
           const tr = document.createElement("tr");
           const valorNum = Number(d.valor) || 0;
           tr.innerHTML = `
@@ -658,16 +929,17 @@
             <td>${d.descricao || ""}</td>
             <td><span class="badge badge-pessoa">${d.pessoa || ""}</span></td>
             <td>${formatCurrency(valorNum)}</td>
-            <td><button class="btn-danger" data-dd-index="${idx}">X</button></td>
+            <td><button class="btn-danger" data-dd-id="${d.id}">X</button></td>
           `;
           tbody.appendChild(tr);
         });
 
-      tbody.querySelectorAll("button[data-dd-index]").forEach(btn => {
+      tbody.querySelectorAll("button[data-dd-id]").forEach(btn => {
         btn.addEventListener("click", (ev) => {
-          const idx = Number(ev.target.getAttribute("data-dd-index"));
+          const ddId = ev.target.getAttribute("data-dd-id");
           const arr = loadDebitos();
-          arr.splice(idx,1);
+          const idx = arr.findIndex(x => x.id === ddId);
+          if (idx !== -1) arr.splice(idx,1);
           saveDebitos(arr);
           renderDebitosUI();
         });
@@ -696,15 +968,129 @@
     }
     function saveSaldoInicial(v) {
       localStorage.setItem(STORAGE_SALDO, String(v));
+      broadcastSync();
+    }
+
+    function renderPessoaSelect(select, allowed) {
+      if (!select) return;
+      const current = select.value;
+      select.innerHTML = "";
+      allowed.forEach(p => {
+        const op = document.createElement("option");
+        op.value = p; op.textContent = p;
+        select.appendChild(op);
+      });
+      if (!allowed.length) {
+        const op = document.createElement("option");
+        op.textContent = "Inicia sessão";
+        select.appendChild(op);
+        select.disabled = true;
+      } else {
+        select.disabled = false;
+      }
+      if (allowed.includes(current)) select.value = current;
+    }
+
+    function renderSessionUI() {
+      const user = getSessionUser();
+      const status = document.getElementById("sessionStatus");
+      if (status) {
+        status.innerHTML = user
+          ? `Sessão ativa: <strong>${user.username}</strong> (${user.role}).`
+          : "Nenhum utilizador autenticado.";
+      }
+
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) logoutBtn.style.display = user ? "inline-flex" : "none";
+
+      const appContent = document.getElementById("appContent");
+      if (appContent) appContent.style.display = user ? "block" : "none";
+
+      document.querySelectorAll('[data-admin-only="true"]').forEach(sec => {
+        sec.style.display = (user && user.role === "admin") ? "block" : "none";
+      });
+
+      renderUserList();
+      renderPermissionsUI();
+
+      const allowed = allowedPessoas(user);
+      renderPessoaSelect(document.getElementById("pessoa"), allowed);
+      renderPessoaSelect(document.getElementById("ddPessoa"), allowed);
+    }
+
+    function renderUserList() {
+      const list = document.getElementById("userList");
+      if (!list) return;
+      const user = getSessionUser();
+      const admin = user && user.role === "admin";
+      const users = loadUsers();
+      list.innerHTML = "";
+      users.forEach(u => {
+        const pill = document.createElement("div");
+        pill.className = "badge badge-pessoa";
+        pill.style.display = "flex";
+        pill.style.alignItems = "center";
+        pill.style.gap = "0.35rem";
+        pill.textContent = `${u.username} (${u.role})`;
+        if (admin) {
+          const resetBtn = document.createElement("button");
+          resetBtn.textContent = "Password";
+          resetBtn.className = "btn-secondary btn-small";
+          resetBtn.addEventListener("click", () => {
+            const nova = prompt(`Nova password para ${u.username}`);
+            if (nova) {
+              u.pass = simpleHash(nova);
+              saveUsers(users);
+              renderUserList();
+            }
+          });
+          const removeBtn = document.createElement("button");
+          removeBtn.textContent = "Remover";
+          removeBtn.className = "btn-danger";
+          removeBtn.addEventListener("click", () => {
+            if (u.username === "admin") return alert("Não podes remover o admin base.");
+            const idx = users.findIndex(x => x.username === u.username);
+            if (idx !== -1) {
+              users.splice(idx,1);
+              saveUsers(users);
+              renderUserList();
+            }
+          });
+          const actions = document.createElement("div");
+          actions.style.display = "flex";
+          actions.style.gap = "0.35rem";
+          actions.appendChild(resetBtn);
+          actions.appendChild(removeBtn);
+          pill.appendChild(actions);
+        }
+        list.appendChild(pill);
+      });
+    }
+
+    function renderPermissionsUI() {
+      const status = document.getElementById("permissionsStatus");
+      const settings = loadSettings();
+      const allowH = !!settings.allowHelderConjunto;
+      const allowG = !!settings.allowGoretiConjunto;
+      if (status) {
+        status.textContent = `Helder -> Conjunto: ${allowH ? "SIM" : "NÃO"} · Goreti -> Conjunto: ${allowG ? "SIM" : "NÃO"}. Conjunto está sempre visível para o Admin.`;
+      }
     }
 
     // Tabela de movimentos
     function renderTabelaMovimentos() {
+      const tbody = document.getElementById("tabelaBody");
+      const sessionUser = getSessionUser();
+      if (!tbody) return;
+
+      if (!sessionUser) {
+        tbody.innerHTML = "";
+        return;
+      }
+
       const all = loadMovimentos();
       const month = getCurrentMonth();
-      const monthData = filterByMonth(all, month);
-      const tbody = document.getElementById("tabelaBody");
-      if (!tbody) return;
+      const monthData = filterDataForUser(filterByMonth(all, month));
       tbody.innerHTML = "";
 
       monthData
@@ -774,17 +1160,29 @@
     let chart1, chart2, chart3;
 
     function renderDashboardEGraficos() {
+      const user = getSessionUser();
       const all = loadMovimentos();
       const month = getCurrentMonth();
-      const monthData = filterByMonth(all, month);
+      const monthData = filterDataForUser(filterByMonth(all, month));
       const saldoInicialInput = document.getElementById("saldoInicial");
-      const saldoInicial = Number(saldoInicialInput.value.replace(",", ".")) || 0;
+      const saldoInicial = saldoInicialInput ? (Number(saldoInicialInput.value.replace(",", ".")) || 0) : 0;
 
       let totalDesp = 0;
       let totalRec = 0;
 
+      if (!user) {
+        ["totalReceitas","totalDespesas","saldoFinal","metaHelderLabel","metaNamoradaLabel","metaConjuntoLabel","metaPoupancaLabel"].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = "—";
+        });
+
+        [chart1, chart2, chart3].forEach(ch => { if (ch) ch.destroy(); });
+        chart1 = chart2 = chart3 = null;
+        return;
+      }
+
       // Totais por pessoa (só despesas)
-      const porPessoa = { Helder:0, Namorada:0, Conjunto:0 };
+      const porPessoa = { Helder:0, Goreti:0, Conjunto:0 };
 
       // Despesas por categoria
       const porCategoria = {};
@@ -816,7 +1214,7 @@
       const metaP = Number(metas.metaPoupanca || 0);
 
       const realH = porPessoa["Helder"] || 0;
-      const realN = porPessoa["Namorada"] || 0;
+      const realN = porPessoa["Goreti"] || 0;
       const realC = porPessoa["Conjunto"] || 0;
       const realP = poupanca;
 
@@ -851,19 +1249,22 @@
         data: {
           labels: ["Despesas", "Receitas", "Saldo"],
           datasets: [{
-            label: "€",
+            label: "Totais do mês (€)",
             data: [totalDesp, totalRec, saldo],
             backgroundColor: [
               "rgba(248,113,113,0.8)",
               "rgba(74,222,128,0.8)",
               "rgba(96,165,250,0.9)"
-            ]
+            ],
+            borderRadius: 8
           }]
         },
         options: {
+          maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
             y: {
+              beginAtZero: true,
               ticks: { color: "#9ca3af" },
               grid: { color: "rgba(55,65,81,0.5)" }
             },
@@ -875,37 +1276,55 @@
         }
       });
 
-      // Gráfico pie categorias
+      // Gráfico barras por categoria
       const ctx2 = document.getElementById("chartCategorias").getContext("2d");
+      const categoriasLabels = Object.keys(porCategoria);
+      const categoriasValues = Object.values(porCategoria);
       chart2 = new Chart(ctx2, {
-        type: "pie",
+        type: "bar",
         data: {
-          labels: Object.keys(porCategoria),
+          labels: categoriasLabels.length ? categoriasLabels : ["Sem despesas"],
           datasets: [{
-            data: Object.values(porCategoria),
-            backgroundColor: [
-              "#f97316","#fb7185","#22c55e","#0ea5e9","#a855f7","#eab308","#38bdf8"
-            ]
+            label: "Total por categoria (€)",
+            data: categoriasValues.length ? categoriasValues : [0],
+            backgroundColor: "rgba(249,115,22,0.8)",
+            borderRadius: 8
           }]
         },
         options: {
-          plugins: { legend: { labels: { color: "#e5e7eb", font: { size: 10 } } } }
+          maintainAspectRatio: false,
+          indexAxis: "y",
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { beginAtZero: true, ticks: { color: "#9ca3af" }, grid: { color: "rgba(55,65,81,0.5)" } },
+            y: { ticks: { color: "#9ca3af" }, grid: { display: false } }
+          }
         }
       });
 
-      // Gráfico doughnut por pessoa
+      // Gráfico barras por pessoa
       const ctx3 = document.getElementById("chartPorPessoa").getContext("2d");
+      const pessoasLabels = ["Helder","Goreti","Conjunto"];
+      const pessoasValores = [porPessoa["Helder"]||0, porPessoa["Goreti"]||0, porPessoa["Conjunto"]||0];
       chart3 = new Chart(ctx3, {
-        type: "doughnut",
+        type: "bar",
         data: {
-          labels: ["Helder","Namorada","Conjunto"],
+          labels: pessoasLabels,
           datasets: [{
-            data: [porPessoa["Helder"]||0, porPessoa["Namorada"]||0, porPessoa["Conjunto"]||0],
-            backgroundColor: ["#3b82f6","#f97316","#22c55e"]
+            label: "Despesa por pessoa (€)",
+            data: pessoasValores,
+            backgroundColor: "rgba(59,130,246,0.85)",
+            borderRadius: 8
           }]
         },
         options: {
-          plugins: { legend: { labels: { color: "#e5e7eb", font:{ size:10 } } } }
+          maintainAspectRatio: false,
+          indexAxis: "y",
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { beginAtZero: true, ticks: { color: "#9ca3af" }, grid: { color: "rgba(55,65,81,0.5)" } },
+            y: { ticks: { color: "#9ca3af" }, grid: { display: false } }
+          }
         }
       });
     }
@@ -917,7 +1336,9 @@
         categorias: loadCategorias(),
         debitos: loadDebitos(),
         metas: loadMetas(),
-        saldoInicial: loadSaldoInicial()
+        saldoInicial: loadSaldoInicial(),
+        users: loadUsers(),
+        settings: loadSettings()
       };
       const blob = new Blob([JSON.stringify(payload,null,2)], { type:"application/json" });
       const url = URL.createObjectURL(blob);
@@ -942,6 +1363,9 @@
           if (data.debitos) saveDebitos(data.debitos);
           if (data.metas) saveMetas(data.metas);
           if (typeof data.saldoInicial !== "undefined") saveSaldoInicial(data.saldoInicial);
+          if (data.users) saveUsers(data.users);
+          if (data.settings) saveSettings(data.settings);
+          logoutUser();
           alert("Backup importado com sucesso!");
           renderTudo();
         } catch (e) {
@@ -949,6 +1373,45 @@
         }
       };
       reader.readAsText(file);
+    }
+
+    // Exportação CSV / Google Sheets
+    function movimentosToCSV() {
+      const rows = [["Data","Descrição","Pessoa","Tipo","Categoria","Valor (€)"]];
+      const movimentos = filterByMonth(filterDataForUser(loadMovimentos()), getCurrentMonth());
+      movimentos.forEach(m => {
+        rows.push([
+          m.data || "",
+          m.descricao || "",
+          m.pessoa || "",
+          m.tipo || "",
+          m.categoria || "",
+          Number(m.valor || 0).toString().replace(".", ",")
+        ]);
+      });
+      return rows.map(r => r.map(val => `"${String(val).replace(/"/g,'""')}"`).join(";"))
+                 .join("\n");
+    }
+
+    function exportMovimentosCSV() {
+      const csv = movimentosToCSV();
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `despesas_${getCurrentMonth()}_csv.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function copyMovimentosToSheets() {
+      const csv = movimentosToCSV();
+      try {
+        await navigator.clipboard.writeText(csv);
+        alert("Copiado! Abre o Google Sheets e cola numa folha vazia.");
+      } catch {
+        alert("Não consegui aceder à área de transferência.");
+      }
     }
 
     // Notificações de débitos diretos
@@ -1013,6 +1476,7 @@
         monthInput.value = getCurrentMonth();
       }
 
+      renderSessionUI();
       renderCategoriasUI();
       renderDebitosUI();
       renderTabelaMovimentos();
@@ -1021,6 +1485,12 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+      ensureDefaultUsers();
+      setupSyncChannel();
+
+      // Obriga um novo login a cada abertura para não herdar sessões antigas
+      logoutUser();
+
       // saldo inicial
       const saldoInicialInput = document.getElementById("saldoInicial");
       if (saldoInicialInput) {
@@ -1041,16 +1511,104 @@
         });
       }
 
+      // Autenticação
+      const loginBtn = document.getElementById("loginBtn");
+      if (loginBtn) {
+        loginBtn.addEventListener("click", () => {
+          const u = (document.getElementById("loginUsername").value || "").trim();
+          const p = document.getElementById("loginPassword").value || "";
+          const users = loadUsers();
+          const found = users.find(user => user.username === u);
+          if (found && found.pass === simpleHash(p)) {
+            setSessionUser(found.username);
+            document.getElementById("loginPassword").value = "";
+            renderTudo();
+          } else {
+            alert("Utilizador ou password inválidos.");
+          }
+        });
+      }
+
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+          logoutUser();
+          renderTudo();
+        });
+      }
+
+      // Criar utilizador (admin)
+      const addUserBtn = document.getElementById("addUserBtn");
+      if (addUserBtn) {
+        addUserBtn.addEventListener("click", () => {
+          const current = getSessionUser();
+          if (!current || current.role !== "admin") return alert("Apenas o admin pode criar utilizadores.");
+          const name = (document.getElementById("newUserName").value || "").trim();
+          const pass = document.getElementById("newUserPass").value || "";
+          const role = document.getElementById("newUserRole").value;
+          if (!name || !pass) return alert("Preenche utilizador e password.");
+          const users = loadUsers();
+          if (users.some(u => u.username === name)) return alert("Já existe um utilizador com esse nome.");
+          users.push({ username:name, role, pass: simpleHash(pass) });
+          saveUsers(users);
+          document.getElementById("newUserName").value = "";
+          document.getElementById("newUserPass").value = "";
+          renderSessionUI();
+        });
+      }
+
+      // Permissões Conjunto
+      const adminOnlyBtn = document.getElementById("adminOnlyConjunto");
+      if (adminOnlyBtn) {
+        adminOnlyBtn.addEventListener("click", () => {
+          const user = getSessionUser();
+          if (!user || user.role !== "admin") return alert("Só o admin pode alterar isto.");
+          const settings = loadSettings();
+          settings.allowHelderConjunto = false;
+          settings.allowGoretiConjunto = false;
+          saveSettings(settings);
+          renderSessionUI();
+        });
+      }
+      const toggleHelder = document.getElementById("toggleHelderConjunto");
+      if (toggleHelder) {
+        toggleHelder.addEventListener("click", () => {
+          const user = getSessionUser();
+          if (!user || user.role !== "admin") return alert("Só o admin pode alterar isto.");
+          const settings = loadSettings();
+          settings.allowHelderConjunto = !settings.allowHelderConjunto;
+          saveSettings(settings);
+          renderSessionUI();
+        });
+      }
+      const toggleGoreti = document.getElementById("toggleGoretiConjunto");
+      if (toggleGoreti) {
+        toggleGoreti.addEventListener("click", () => {
+          const user = getSessionUser();
+          if (!user || user.role !== "admin") return alert("Só o admin pode alterar isto.");
+          const settings = loadSettings();
+          settings.allowGoretiConjunto = !settings.allowGoretiConjunto;
+          saveSettings(settings);
+          renderSessionUI();
+        });
+      }
+
       // Botão novo movimento
       const addBtn = document.getElementById("addBtn");
       if (addBtn) {
         addBtn.addEventListener("click", () => {
+          const sessionUser = getSessionUser();
+          if (!sessionUser) return alert("Faz login para registar movimentos.");
           const data = document.getElementById("data").value || new Date().toISOString().slice(0,10);
           const desc = document.getElementById("descricao").value.trim();
           const valor = Number((document.getElementById("valor").value || "").replace(",", "."));
           const tipo = document.getElementById("tipo").value;
           const pessoa = document.getElementById("pessoa").value;
           const categoria = document.getElementById("categoria").value;
+
+          if (!allowedPessoas(sessionUser).includes(pessoa)) {
+            return alert("Sem permissão para registar para essa pessoa.");
+          }
 
           if (!desc || isNaN(valor)) {
             alert("Preenche pelo menos a descrição e o valor.");
@@ -1097,10 +1655,13 @@
       const addDebitoBtn = document.getElementById("addDebitoBtn");
       if (addDebitoBtn) {
         addDebitoBtn.addEventListener("click", () => {
+          const sessionUser = getSessionUser();
+          if (!sessionUser) return alert("Faz login para registar débitos diretos.");
           const desc = document.getElementById("ddDescricao").value.trim();
           const valor = Number((document.getElementById("ddValor").value || "").replace(",", "."));
           const dia = Number(document.getElementById("ddDia").value);
           const pessoa = document.getElementById("ddPessoa").value;
+          if (!allowedPessoas(sessionUser).includes(pessoa)) return alert("Sem permissão para essa pessoa.");
           if (!desc || isNaN(valor) || !dia || dia < 1 || dia > 31) {
             alert("Preenche descrição, valor e um dia válido (1-31).");
             return;
@@ -1153,6 +1714,17 @@
           }
         });
       }
+
+      const exportCsvBtn = document.getElementById("exportCsvBtn");
+      if (exportCsvBtn) exportCsvBtn.addEventListener("click", exportMovimentosCSV);
+      const copySheetsBtn = document.getElementById("copySheetsBtn");
+      if (copySheetsBtn) copySheetsBtn.addEventListener("click", copyMovimentosToSheets);
+
+      const forceSyncBtn = document.getElementById("forceSyncBtn");
+      if (forceSyncBtn) forceSyncBtn.addEventListener("click", () => {
+        broadcastSync();
+        renderTudo();
+      });
 
       // Notificação barra fechar
       const notifClose = document.getElementById("notifClose");
