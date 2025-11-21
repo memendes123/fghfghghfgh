@@ -45,10 +45,12 @@
 
 ## Posso sincronizar sem exportar/importar sempre?
 - Não existe sincronização automática em tempo real porque a app não tem servidor próprio nem base de dados online. Tudo fica guardado localmente no navegador de cada dispositivo para manter a privacidade.
+- Hospedar o HTML em qualquer serviço estático **não** cria sincronização: apenas serve o ficheiro. Cada dispositivo continua a ter a sua cópia local dos dados.
 - Para minimizar os passos manuais, usa uma **pasta partilhada** no Google Drive/Dropbox/iCloud:
   - Guarda o backup `.json` nessa pasta; ele fica disponível para todos os dispositivos com acesso à pasta.
   - Depois de atualizares os dados, substitui o ficheiro existente na pasta partilhada (exporta com o mesmo nome e sobrescreve).
   - Nos outros telemóveis, basta abrir a pasta e descarregar esse `.json` atualizado antes de clicar em **Importar backup**.
+- Se precisares de sincronização automática entre telemóvel/PC sem exportar/importar, terás de usar um serviço com base de dados e autenticação (ex.: Supabase, Firebase). Esta versão offline não envia dados para nenhum servidor.
 - Evita partilhar o ficheiro por links públicos; mantém a pasta privada e só partilhada com as contas de quem pode ver os dados.
 
 ## Onde posso hospedar o HTML de forma gratuita e segura?
