@@ -1,15 +1,18 @@
 # Despesas Dashboard PRO+
 
-## Como começar
-### Abrir no iPhone/iPad quando só aparece o código
-- No Google Drive/iCloud, toca nos **três pontos** do ficheiro → **Abrir em** → **Safari** (ou **Chrome**). Não uses a pré-visualização de texto (é isso que mostra o código cru).
-- Se não aparecer Safari na partilha, escolhe **Guardar em Ficheiros**, garante que termina em `.html`, abre-o na app **Ficheiros**, mantém o dedo em cima do ficheiro → **Partilhar** → desliza a fila de apps e toca em **Abrir no Safari** (ou em **Chrome** se preferires).
-- Assim que abrir no navegador, usa **Adicionar ao ecrã principal** (Safari: partilhar → Adicionar ao ecrã principal; Chrome: ⋮ → Adicionar à tela inicial) para não repetir os passos.
-
-1. Abre o ficheiro `despesas_dashboard_pro_plus.html` diretamente no browser (Chrome, Edge ou Safari). Podes guardá-lo no iCloud Drive/Google Drive e abri-lo localmente.
-2. Sempre que abres o ficheiro, a sessão é automaticamente encerrada (o painel fica escondido e as tabelas são limpas) para impedir que dados fiquem visíveis. O primeiro ecrã é sempre o **Login**.
-3. Introduz `admin` / `admin` para entrares como administrador e muda de imediato essa password.
-4. Depois de entrares, todo o painel fica visível. Sem sessão iniciada não é possível ver tabelas ou exportar dados.
+## Guia super rápido (menos passos, mais simples)
+1) **Usar no telemóvel sem ver código**
+   - iPhone/iPad (Drive/iCloud): três pontos → **Abrir em** → **Safari/Chrome**. Se não aparecer, escolhe **Guardar em Ficheiros** → pressiona o `.html` → **Partilhar** → **Abrir no Safari**. Assim que abrir, toca em **Adicionar ao ecrã principal**.
+   - Android (Drive): três pontos → **Abrir com** → **Chrome** (ou faz download e abre a partir de *Downloads*). Depois usa ⋮ → **Adicionar à tela inicial**.
+2) **GitHub Pages em 2 minutos**
+   - Sobe `index.html` e `despesas_dashboard_pro_plus.html` para um repositório → *Settings → Pages* → Source = **Deploy from a branch** → branch principal → pasta **/**. O `index.html` redireciona sozinho para o dashboard.
+   - Abre o URL do Pages no telemóvel e adiciona ao ecrã principal. Os dados continuam a ficar apenas no dispositivo.
+3) **Login rápido**
+   - Abre o HTML no navegador e autentica com `admin` / `admin` (muda de imediato). O painel só aparece depois do login e fecha ao voltares a abrir.
+4) **Cópia de segurança simples**
+   - Em **Backup e recuperação**, clica em **Exportar backup** e guarda o `.json` no Drive/iCloud. Para restaurar noutro dispositivo, faz download e usa **Importar backup**.
+5) **Mesmos dados em dois telemóveis**
+   - Guarda o backup `.json` numa pasta partilhada. Sempre que atualizares, exporta novamente e substitui o ficheiro; no outro telemóvel, faz download e importa.
 
 ## Utilizadores e acessos
 - O admin pode criar/remover utilizadores e definir o seu perfil (Admin, Helder, Goreti ou Conjunto).
@@ -40,13 +43,7 @@
 ## Usar no telemóvel
 - **iPhone:** abre o HTML no Safari → Partilhar → *Adicionar ao ecrã principal* para criar um atalho em ecrã inteiro.
 - **Android:** abre no Chrome → menu ⋮ → *Adicionar à tela inicial*.
-- Cada telemóvel guarda os dados localmente; usa o backup `.json` para manter dois dispositivos alinhados.
-
-### Se no telemóvel só vês o código em vez da app
-- Isso acontece porque o Google Drive/iCloud mostra uma pré-visualização de texto. Não precisas de o guardar no ambiente de trabalho: basta abrir diretamente no navegador.
-- **iPhone (Drive/iCloud):** toca nos três pontos → *Abrir em* → *Safari* (ou *Chrome*). Se o ficheiro for para o *Ficheiros*, toca no HTML → botão Partilhar → *Abrir no Safari*. Depois, usa *Adicionar ao ecrã principal*.
-- **Android (Drive):** toca nos três pontos do ficheiro → *Abrir com* → *Chrome* (ou *Download* e abre a partir da pasta *Downloads*). Em seguida usa ⋮ → *Adicionar à tela inicial*.
-- Se preferires um link direto sem downloads, hospeda o HTML em GitHub Pages/Netlify/Cloudflare Pages/Vercel (todos gratuitos para ficheiros estáticos) e abre esse URL no telemóvel.
+- Se só aparecer código, usa os passos do "Guia super rápido" acima.
 
 ## Usar em dois telemóveis com os mesmos dados
 1. Num telemóvel, depois de atualizares dados, exporta o backup `.json`.
