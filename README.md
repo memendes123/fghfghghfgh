@@ -1,6 +1,11 @@
 # Despesas Dashboard PRO+
 
 ## Como começar
+### Abrir no iPhone/iPad quando só aparece o código
+- No Google Drive/iCloud, toca nos **três pontos** do ficheiro → **Abrir em** → **Safari** (ou **Chrome**). Não uses a pré-visualização de texto (é isso que mostra o código cru).
+- Se não aparecer Safari na partilha, escolhe **Guardar em Ficheiros**, garante que termina em `.html`, abre-o na app **Ficheiros**, mantém o dedo em cima do ficheiro → **Partilhar** → desliza a fila de apps e toca em **Abrir no Safari** (ou em **Chrome** se preferires).
+- Assim que abrir no navegador, usa **Adicionar ao ecrã principal** (Safari: partilhar → Adicionar ao ecrã principal; Chrome: ⋮ → Adicionar à tela inicial) para não repetir os passos.
+
 1. Abre o ficheiro `despesas_dashboard_pro_plus.html` diretamente no browser (Chrome, Edge ou Safari). Podes guardá-lo no iCloud Drive/Google Drive e abri-lo localmente.
 2. Sempre que abres o ficheiro, a sessão é automaticamente encerrada (o painel fica escondido e as tabelas são limpas) para impedir que dados fiquem visíveis. O primeiro ecrã é sempre o **Login**.
 3. Introduz `admin` / `admin` para entrares como administrador e muda de imediato essa password.
@@ -66,6 +71,13 @@
   - **Netlify/Cloudflare Pages/Vercel** (gratuitos para uso pessoal): criam um site estático a partir de um upload ou de um repositório Git. Sobe apenas o HTML para evitar expor backups.
 - Em qualquer opção, o login continua obrigatório ao abrir o ficheiro e os dados só ficam no dispositivo até exportares um backup para a tua pasta segura.
 
+### Publicar no GitHub Pages (passo a passo)
+1. Cria um repositório (público ou privado) no GitHub e faz upload de **ambos** os ficheiros: `index.html` e `despesas_dashboard_pro_plus.html`.
+2. Em *Settings → Pages*, define **Source = Deploy from a branch** e escolhe a branch principal (ex.: `main`) e a pasta **/ (root)**. Clica em **Save**.
+3. Aguarda o banner verde com o URL do site (formato `https://<utilizador>.github.io/<repo>/`). O endereço principal já abre o dashboard porque o `index.html` redireciona para `despesas_dashboard_pro_plus.html`.
+4. Se preferires testar antes, abre o ficheiro `index.html` localmente: ele deve reenviar-te automaticamente para o dashboard. No telemóvel, adiciona à tela inicial para parecer app nativa.
+5. Mantém o repositório privado se não queres que outros vejam o HTML. Mesmo em público, os dados continuam a ficar guardados apenas no dispositivo de quem abrir o link.
+
 ## Como criar um backend dedicado gratuito (Supabase) e ligá-lo à app
 Se quiseres sincronização automática (sem exportar/importar manual), usa o conector integrado de Supabase (plano gratuito):
 
@@ -96,10 +108,11 @@ Se quiseres sincronização automática (sem exportar/importar manual), usa o co
    - Em *Project Settings → API* copia o **Project URL** e a **anon public key** (nunca uses a service key no HTML).
 
 4. **Configurar no HTML (sem editar código)**
-   - Abre o ficheiro e, na secção *Backend dedicado gratuito (Supabase)*, preenche: Project URL, anon key, email e password do utilizador Supabase.
-   - Clica em **Testar login** para garantir que as credenciais são válidas (se disser "credenciais inválidas", cria/edita o utilizador em *Authentication → Users* ou confirma o email).
-   - Marca *Ativar sync automático* e clica em **Guardar configuração**.
-   - Depois de fazeres login interno (admin/Helder/Goreti), é feito **pull automático** de 15 em 15 segundos e sempre que clicares em **Pull agora**. O **Push** é disparado de imediato sempre que gravares movimentos/débitos/metas ou metas/categorias/definições.
+- Abre o ficheiro e, na secção *Backend dedicado gratuito (Supabase)*, preenche: Project URL, anon key, email e password do utilizador Supabase.
+- Clica em **Testar login** para garantir que as credenciais são válidas (se disser "credenciais inválidas", cria/edita o utilizador em *Authentication → Users* ou confirma o email).
+- Marca *Ativar sync automático* e clica em **Guardar configuração**.
+- Depois de fazeres login interno (admin/Helder/Goreti), é feito **pull automático** de 15 em 15 segundos e sempre que clicares em **Pull agora**. O **Push** é disparado de imediato sempre que gravares movimentos/débitos/metas ou metas/categorias/definições.
+- Se quiseres evitar voltar a escrever as chaves em cada dispositivo, codifica o objeto `{url, anon, email, password, enabled:true}` em base64 e coloca-o na constante `BUILTIN_SUPABASE_B64` dentro do HTML. A configuração fica embutida e oculta na interface: basta abrir o mesmo ficheiro noutro PC/telemóvel e fazer login interno para puxar os dados.
 
 5. **Como funciona o sync automático**
    - A app autentica no Supabase com o email/password indicados, faz **pull** ao iniciar sessão, repete o pull em segundo plano (15s) enquanto estiveres com sessão interna ativa e agenda **push** imediato sempre que guardas dados.
