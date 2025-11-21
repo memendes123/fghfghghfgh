@@ -84,6 +84,7 @@ Se quiseres sincronização automática (sem exportar/importar manual), usa o co
    create policy "owner can update" on public.despesas_sync
      for update using (auth.uid() = user_id);
    ```
+   - Depois de executar, confirma no *Table Editor* que a tabela tem as colunas `id`, `user_id`, `payload` e `updated_at` e que a secção de *RLS* mostra as políticas ativas. Se o editor gerar o `id` automaticamente (como na captura), mantém a estrutura acima.
 
 3. **Copiar as chaves públicas**
    - Em *Project Settings → API* copia o **Project URL** e a **anon public key** (nunca uses a service key no HTML).
@@ -96,6 +97,10 @@ Se quiseres sincronização automática (sem exportar/importar manual), usa o co
 5. **Como funciona o sync automático**
    - A app autentica no Supabase com o email/password indicados, faz **pull** ao iniciar sessão e agenda **push** sempre que guardas dados.
    - Os dados continuam filtrados pelo login interno; o Supabase apenas armazena o JSON cifrado pelo próprio serviço com RLS por utilizador.
+
+6. **Preciso sempre de internet?**
+   - **Sim, para o Supabase**: pulls/pushes só funcionam com ligação ativa. Se estiveres offline, continuas a trabalhar localmente e o push fica em fila; quando a internet voltar, o conector envia a versão mais recente.
+   - **Não, para o resto da app**: tudo o que é local (login interno, registos, metas, exportar backup) funciona offline. Se quiseres parar de usar o backend, desmarca *Ativar sync automático* e guarda.
 
 6. **Boas práticas de segurança**
    - Usa sempre HTTPS e mantém o HTML privado; não publiques a chave *service* em lado nenhum.
