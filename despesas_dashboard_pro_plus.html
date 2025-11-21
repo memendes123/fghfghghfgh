@@ -309,6 +309,19 @@
 
   <main>
 
+    <!-- AJUDA RÁPIDA PARA TELEMÓVEL -->
+    <section class="card" style="border:1px dashed rgba(148,163,184,0.6); background:rgba(15,23,42,0.85);">
+      <div class="flex-between" style="gap:0.5rem;">
+        <h2 style="margin:0;">Abrir no telemóvel sem ver código</h2>
+        <span class="badge badge-receita" style="border-color:rgba(52,211,153,0.4); color:#bbf7d0;">Dica rápida</span>
+      </div>
+      <ul style="margin:0.5rem 0; padding-left:1.1rem; color:#cbd5e1; font-size:0.9rem;">
+        <li><strong>iPhone/iPad:</strong> Faz download → Partilhar → <em>Abrir no Safari</em> (ou Chrome). Se vires só texto, confirma que o nome termina em <code>.html</code> e volta a abrir.</li>
+        <li><strong>Android:</strong> No Drive, usa ⋮ → <em>Abrir com</em> → Chrome (ou faz download e abre a partir de <em>Downloads</em>). Depois, adiciona ao ecrã inicial.</li>
+        <li>Uma vez aberto no navegador, usa <em>Adicionar ao ecrã principal</em> para não precisares de repetir estes passos.</li>
+      </ul>
+    </section>
+
     <!-- AUTENTICAÇÃO & SESSÃO -->
     <section class="card">
       <div class="flex-between">
@@ -784,6 +797,9 @@
     const STORAGE_SESSION = "sessionPRO_v1";
     const SYNC_CHANNEL_NAME = "despesasPRO_sync";
     const STORAGE_SUPABASE = "supabaseCfg_v1";
+    // Opcional: codifica aqui uma configuração Supabase para ficar embutida no próprio HTML (base64 de um JSON
+    // {"url":"https://xxx.supabase.co","anon":"...","email":"...","password":"...","enabled":true}).
+    const BUILTIN_SUPABASE_B64 = "";
 
     // Utils
     function formatCurrency(value) {
@@ -913,12 +929,47 @@
     }
 
     // Supabase helpers
+    function decodeSupabaseBase64(str) {
+      if (!str) return "";
+      try { return atob(str); } catch { return str; }
+    }
+    function normalizeSupabaseConfig(raw) {
+      if (!raw) return {};
+      const cfg = { ...raw };
+      if (!cfg.anon && cfg.anonEncoded) cfg.anon = decodeSupabaseBase64(cfg.anonEncoded);
+      if (!cfg.password && cfg.passEncoded) cfg.password = decodeSupabaseBase64(cfg.passEncoded);
+      if (typeof cfg.enabled === "undefined" && cfg.url && cfg.anon && cfg.email && cfg.password) {
+        cfg.enabled = true;
+      }
+      return cfg;
+    }
+    function loadEmbeddedSupabaseConfig() {
+      if (!BUILTIN_SUPABASE_B64) return {};
+      try {
+        const decoded = JSON.parse(decodeSupabaseBase64(BUILTIN_SUPABASE_B64));
+        return normalizeSupabaseConfig(decoded);
+      } catch {
+        return {};
+      }
+    }
     function loadSupabaseConfig() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_SUPABASE) || "{}"); }
-      catch { return {}; }
+      const base = loadEmbeddedSupabaseConfig();
+      try {
+        const fromStorage = JSON.parse(localStorage.getItem(STORAGE_SUPABASE) || "{}");
+        return normalizeSupabaseConfig({ ...base, ...fromStorage });
+      } catch {
+        return normalizeSupabaseConfig(base);
+      }
     }
     function saveSupabaseConfig(cfg) {
-      localStorage.setItem(STORAGE_SUPABASE, JSON.stringify(cfg || {}));
+      const payload = {
+        url: cfg?.url || "",
+        anonEncoded: cfg?.anon ? btoa(cfg.anon) : "",
+        email: cfg?.email || "",
+        passEncoded: cfg?.password ? btoa(cfg.password) : "",
+        enabled: !!cfg?.enabled
+      };
+      localStorage.setItem(STORAGE_SUPABASE, JSON.stringify(payload));
     }
     function supabaseConfigEnabled(cfg) {
       return !!(cfg && cfg.enabled && cfg.url && cfg.anon && cfg.email && cfg.password);
@@ -1699,6 +1750,8 @@
       const pullSupBtn = document.getElementById("pullSupabase");
       const pushSupBtn = document.getElementById("pushSupabase");
       const logoutSupBtn = document.getElementById("logoutSupabase");
+      const embeddedSupCfg = loadEmbeddedSupabaseConfig();
+      const hasEmbeddedSupCfg = supabaseConfigEnabled(embeddedSupCfg);
 
       if (supUrlInput) supUrlInput.value = supCfg.url || "";
       if (supAnonInput) supAnonInput.value = supCfg.anon || "";
@@ -1708,6 +1761,8 @@
       if (supabaseConfigEnabled(supCfg)) {
         setSupabaseStatus("Configuração Supabase carregada. Pull automático a cada 15s depois de fazer login interno.");
         startSupabaseAutoPull();
+      } else if (hasEmbeddedSupCfg) {
+        setSupabaseStatus("Configuração Supabase embutida pronta a usar: abre o HTML noutro dispositivo e faz login interno para sincronizar automaticamente.");
       }
 
       if (saveSupBtn) {

@@ -1,6 +1,11 @@
 # Despesas Dashboard PRO+
 
 ## Como começar
+### Abrir no iPhone/iPad quando só aparece o código
+- Depois de fazer download do `despesas_dashboard_pro_plus.html`, **não** uses a pré-visualização de texto da app Ficheiros/Drive (é isso que mostra o código cru).
+- Toca em **Partilhar** → **Abrir no Safari** (ou **Abrir no Chrome**). Assim que o ficheiro abrir no navegador, adiciona-o ao ecrã principal para não precisares de repetir.
+- Se já estiver no Safari e continuares a ver código, confirma que o ficheiro termina em `.html` (renomeia se necessário) e recarrega. O login interno continuará a ser pedido.
+
 1. Abre o ficheiro `despesas_dashboard_pro_plus.html` diretamente no browser (Chrome, Edge ou Safari). Podes guardá-lo no iCloud Drive/Google Drive e abri-lo localmente.
 2. Sempre que abres o ficheiro, a sessão é automaticamente encerrada (o painel fica escondido e as tabelas são limpas) para impedir que dados fiquem visíveis. O primeiro ecrã é sempre o **Login**.
 3. Introduz `admin` / `admin` para entrares como administrador e muda de imediato essa password.
@@ -96,10 +101,11 @@ Se quiseres sincronização automática (sem exportar/importar manual), usa o co
    - Em *Project Settings → API* copia o **Project URL** e a **anon public key** (nunca uses a service key no HTML).
 
 4. **Configurar no HTML (sem editar código)**
-   - Abre o ficheiro e, na secção *Backend dedicado gratuito (Supabase)*, preenche: Project URL, anon key, email e password do utilizador Supabase.
-   - Clica em **Testar login** para garantir que as credenciais são válidas (se disser "credenciais inválidas", cria/edita o utilizador em *Authentication → Users* ou confirma o email).
-   - Marca *Ativar sync automático* e clica em **Guardar configuração**.
-   - Depois de fazeres login interno (admin/Helder/Goreti), é feito **pull automático** de 15 em 15 segundos e sempre que clicares em **Pull agora**. O **Push** é disparado de imediato sempre que gravares movimentos/débitos/metas ou metas/categorias/definições.
+- Abre o ficheiro e, na secção *Backend dedicado gratuito (Supabase)*, preenche: Project URL, anon key, email e password do utilizador Supabase.
+- Clica em **Testar login** para garantir que as credenciais são válidas (se disser "credenciais inválidas", cria/edita o utilizador em *Authentication → Users* ou confirma o email).
+- Marca *Ativar sync automático* e clica em **Guardar configuração**.
+- Depois de fazeres login interno (admin/Helder/Goreti), é feito **pull automático** de 15 em 15 segundos e sempre que clicares em **Pull agora**. O **Push** é disparado de imediato sempre que gravares movimentos/débitos/metas ou metas/categorias/definições.
+- Se quiseres evitar voltar a escrever as chaves em cada dispositivo, codifica o objeto `{url, anon, email, password, enabled:true}` em base64 e coloca-o na constante `BUILTIN_SUPABASE_B64` dentro do HTML. A configuração fica embutida e oculta na interface: basta abrir o mesmo ficheiro noutro PC/telemóvel e fazer login interno para puxar os dados.
 
 5. **Como funciona o sync automático**
    - A app autentica no Supabase com o email/password indicados, faz **pull** ao iniciar sessão, repete o pull em segundo plano (15s) enquanto estiveres com sessão interna ativa e agenda **push** imediato sempre que guardas dados.
